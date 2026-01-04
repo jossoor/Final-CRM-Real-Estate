@@ -323,7 +323,7 @@ standard_dropdown_items = [
 
 fixtures = [
     "Client Script",
-    "Server Script",
+    
     {
         "dt": "Client Script",
         "filters": [["name", "in", ["Filtered Buttons", "Highlight Orginal lead has Duplicates"]]],
