@@ -1101,31 +1101,20 @@ function clearDrawer() {
 
 /* ---------- Inject Last Comment + Delayed columns if missing ---------- */
 const columnsForList = ref(null)
+
 watch(
   () => leads.value?.data?.columns,
   (cols) => {
     if (!cols) return
+
     const ensured = [...cols]
 
-    const hasLast = ensured.some(c => (c.key || c.value) === 'last_comment')
-    if (!hasLast) {
+    if (!ensured.some(c => (c.key || c.value) === 'latest_comment')) {
       ensured.push({
-        key: 'last_comment',
-        label: __('Last FeedBack'),
-        align: 'left',
+        key: 'latest_comment',
+        label: __('Latest Comment'),
         type: 'Data',
-        width: 600
-      })
-    }
-
-    const hasDelayed = ensured.some(c => (c.key || c.value) === 'delayed')
-    if (!hasDelayed) {
-      ensured.push({
-        key: 'delayed',
-        label: __('Delayed'),
-        align: 'center',
-        type: 'Check',
-        width: 120,
+        width: 600,
       })
     }
 
