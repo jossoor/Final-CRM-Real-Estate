@@ -30,6 +30,7 @@ class CRMLead(Document):
 
 	def after_insert(self):
 		if self.lead_owner:
+			self.share_with_agent(self.lead_owner)
 			self.assign_agent(self.lead_owner)
 
 	def before_save(self):
@@ -117,28 +118,53 @@ class CRMLead(Document):
 		if not agent:
 			return
 
+		# Get Team Leaders for the agent
+		team_leaders = self.get_team_leaders(agent)
+		
 		docshares = frappe.get_all(
 			"DocShare",
 			filters={"share_name": self.name, "share_doctype": self.doctype},
 			fields=["name", "user"],
 		)
 
-		shared_with = [d.user for d in docshares] + [agent]
+		# Users who should have access: existing shares + agent + team leaders
+		users_to_share_with = [d.user for d in docshares] + [agent] + team_leaders
+		users_to_share_with = list(set(users_to_share_with)) # Unique list
 
-		for user in shared_with:
-			if user == agent and not frappe.db.exists(
-				"DocShare",
-				{"user": agent, "share_name": self.name, "share_doctype": self.doctype},
-			):
-				frappe.share.add_docshare(
-					self.doctype,
-					self.name,
-					agent,
-					write=1,
-					flags={"ignore_share_permission": True},
-				)
-			elif user != agent:
+		# Users we explicitly want to ENSURE have access (Agent + Leaders)
+		mandatory_users = [agent] + team_leaders
+		mandatory_users = list(set(mandatory_users))
+
+		for user in users_to_share_with:
+			# If user is in mandatory list (Agent or Team Leader), ensure they have share
+			if user in mandatory_users:
+				if not frappe.db.exists(
+					"DocShare",
+					{"user": user, "share_name": self.name, "share_doctype": self.doctype},
+				):
+					frappe.share.add_docshare(
+						self.doctype,
+						self.name,
+						user,
+						write=1,
+						flags={"ignore_share_permission": True},
+					)
+			# If user is NOT in mandatory list, and was present in docshares, check if we need to remove?
+			# Wait, original logic removed everyone else except the agent.
+			# "elif user != agent: frappe.share.remove..."
+			# So we should remove 'user' if they are NOT in mandatory_users.
+			elif user not in mandatory_users: 
 				frappe.share.remove(self.doctype, self.name, user)
+
+	def get_team_leaders(self, agent):
+		"""
+		Returns a list of Team Leaders for the given agent.
+		"""
+		teams = frappe.get_all("Member", filters={"member": agent}, pluck="parent")
+		if not teams:
+			return []
+		
+		return frappe.get_all("Team", filters={"name": ["in", teams]}, pluck="team_leader")
 
 	def create_contact(self, existing_contact=None, throw=True):
 		if not self.lead_name:
