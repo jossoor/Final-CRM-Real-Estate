@@ -326,14 +326,15 @@ fixtures = [
     
     {
         "dt": "Client Script",
-        "filters": [["name", "in", ["Filtered Buttons", "Highlight Orginal lead has Duplicates"]]],
+        "filters": [["name", "in", ["Filtered Buttons", "Highlight Orginal lead has Duplicates","filtered button","Assign to full name",]]],
     },
-    {"dt": "Server Script", "filters": [["name", "in", ["Hot Leads", "FCRM Note For Hot Leads", "ToDo For Hot Leads"]]]},
+    {"dt": "Server Script", "filters": [["name", "in", ["Hot Leads", "FCRM Note For Hot Leads", "ToDo For Hot Leads","notification"]]]},
     {"dt": "DocType", "filters": [["name", "in", ["Saved Filter"]]]},
     {"dt": "DocType", "filters": [["name", "in", ["CRM Lead"," CRM Lead Status","CRM Task","CRM Communication Status","Comment"]]]},
 
 
-  
+     
+
 
 
 ]
