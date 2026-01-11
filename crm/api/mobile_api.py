@@ -4832,3 +4832,269 @@ def get_task_with_reminder(task_id=None, name=None):
     except Exception as e:
         frappe.log_error(f"Error fetching task with reminder: {str(e)}", "Get Task With Reminder Error")
         frappe.throw(_("Failed to fetch task: {0}").format(str(e)))
+
+
+def get_compact_project(project, return_all_fields=False):
+	"""
+	Return project representation.
+	Accepts both Document objects and dict-like objects.
+	"""
+	def _get(obj, key, default=None):
+		if isinstance(obj, dict):
+			return obj.get(key, default)
+		return getattr(obj, key, default)
+	
+	project_name = project.name if hasattr(project, "name") else project.get("name")
+	
+	if return_all_fields:
+		result = {}
+		if isinstance(project, dict):
+			for key, value in project.items():
+				if key not in ['doctype'] and value is not None:
+					result[key] = value
+			if 'description' in result and result['description']:
+				result['description'] = strip_html(result['description']).strip()
+		else:
+			# Document object
+			for field in project.meta.fields:
+				fieldname = field.fieldname
+				if fieldname in ['doctype']:
+					continue
+				if field.fieldtype == 'Table':
+					continue
+				value = getattr(project, fieldname, None)
+				important_fields = ['name', 'modified', 'creation', 'owner', 'modified_by', 'description']
+				if value is not None or fieldname in important_fields:
+					result[fieldname] = value
+			
+			result['name'] = project.name
+			if hasattr(project, 'modified'):
+				result['modified'] = project.modified
+			if hasattr(project, 'creation'):
+				result['creation'] = project.creation
+			if hasattr(project, 'owner'):
+				result['owner'] = project.owner
+			if hasattr(project, 'modified_by'):
+				result['modified_by'] = project.modified_by
+			
+			if 'description' in result and result['description']:
+				result['description'] = strip_html(result['description']).strip()
+	else:
+		result = {
+			"name": project_name,
+			"project_name": _get(project, "project_name"),
+			"status": _get(project, "status"),
+			"developer": _get(project, "developer"),
+			"location": _get(project, "location"),
+			"min_price": _get(project, "min_price"),
+			"max_price": _get(project, "max_price"),
+			"cover_image": _get(project, "cover_image"),
+			"city": _get(project, "city"),
+			"district": _get(project, "district")
+		}
+	
+	return result
+
+
+@frappe.whitelist()
+def get_all_projects(page=1, limit=20, order_by="modified desc",
+					 status=None, developer=None, location=None,
+					 min_price_from=None, min_price_to=None,
+					 max_price_from=None, max_price_to=None,
+					 project_name=None, city=None, district=None,
+					 categories=None, exclusivity=None, furnishing=None,
+					 **kwargs):
+	"""
+	Get all Real Estate Projects with pagination and filtering.
+	"""
+	if hasattr(frappe, 'form_dict') and frappe.form_dict:
+		status = frappe.form_dict.get('status') if 'status' in frappe.form_dict else status
+		developer = frappe.form_dict.get('developer') if 'developer' in frappe.form_dict else developer
+		location = frappe.form_dict.get('location') if 'location' in frappe.form_dict else location
+		min_price_from = frappe.form_dict.get('min_price_from') if 'min_price_from' in frappe.form_dict else min_price_from
+		min_price_to = frappe.form_dict.get('min_price_to') if 'min_price_to' in frappe.form_dict else min_price_to
+		max_price_from = frappe.form_dict.get('max_price_from') if 'max_price_from' in frappe.form_dict else max_price_from
+		max_price_to = frappe.form_dict.get('max_price_to') if 'max_price_to' in frappe.form_dict else max_price_to
+		project_name = frappe.form_dict.get('project_name') if 'project_name' in frappe.form_dict else project_name
+		city = frappe.form_dict.get('city') if 'city' in frappe.form_dict else city
+		district = frappe.form_dict.get('district') if 'district' in frappe.form_dict else district
+		categories = frappe.form_dict.get('categories') if 'categories' in frappe.form_dict else categories
+		exclusivity = frappe.form_dict.get('exclusivity') if 'exclusivity' in frappe.form_dict else exclusivity
+		furnishing = frappe.form_dict.get('furnishing') if 'furnishing' in frappe.form_dict else furnishing
+		page = frappe.form_dict.get('page') if 'page' in frappe.form_dict else page
+		limit = frappe.form_dict.get('limit') if 'limit' in frappe.form_dict else limit
+		order_by = frappe.form_dict.get('order_by') if 'order_by' in frappe.form_dict else order_by
+
+	page = cint(page) or 1
+	limit = cint(limit) or 20
+	if page < 1: page = 1
+	if limit < 1: limit = 20
+	if limit > 100: limit = 100
+	
+	start = (page - 1) * limit
+	
+	filters = []
+	
+	if status and str(status).strip():
+		statuses = [s.strip() for s in status.split(",") if s.strip()]
+		if statuses:
+			if len(statuses) == 1:
+				filters.append(["status", "=", statuses[0]])
+			else:
+				filters.append(["status", "in", statuses])
+				
+	if developer and str(developer).strip():
+		filters.append(["developer", "like", f"%{developer}%"])
+		
+	if location and str(location).strip():
+		filters.append(["location", "like", f"%{location}%"])
+		
+	if project_name and str(project_name).strip():
+		filters.append(["project_name", "like", f"%{project_name}%"])
+		
+	if city and str(city).strip():
+		filters.append(["city", "like", f"%{city}%"])
+		
+	if district and str(district).strip():
+		filters.append(["district", "like", f"%{district}%"])
+
+	if categories and str(categories).strip():
+		cat_list = [c.strip() for c in categories.split(",") if c.strip()]
+		if cat_list:
+			if len(cat_list) == 1:
+				filters.append(["categories", "=", cat_list[0]])
+			else:
+				filters.append(["categories", "in", cat_list])
+				
+	if exclusivity and str(exclusivity).strip():
+		filters.append(["exclusivity", "=", exclusivity])
+		
+	if furnishing and str(furnishing).strip():
+		filters.append(["furnishing", "=", furnishing])
+
+	if min_price_from:
+		filters.append(["min_price", ">=", float(min_price_from)])
+	if min_price_to:
+		filters.append(["min_price", "<=", float(min_price_to)])
+		
+	if max_price_from:
+		filters.append(["max_price", ">=", float(max_price_from)])
+	if max_price_to:
+		filters.append(["max_price", "<=", float(max_price_to)])
+
+	# Get total count
+	total = frappe.db.count("Real Estate Project", filters=filters if filters else None)
+	
+	# Get all fields
+	meta = frappe.get_meta("Real Estate Project")
+	all_fieldnames = [f.fieldname for f in meta.fields 
+					  if f.fieldtype not in ['Tab Break', 'Section Break', 'Column Break', 'Table']]
+	if 'name' not in all_fieldnames:
+		all_fieldnames.insert(0, 'name')
+		
+	fields = _safe_fields("Real Estate Project", all_fieldnames)
+	
+	projects = frappe.get_all(
+		"Real Estate Project",
+		filters=filters if filters else None,
+		fields=fields,
+		order_by=order_by,
+		limit_start=start,
+		limit_page_length=limit
+	)
+	
+	data = [get_compact_project(p, return_all_fields=True) for p in projects]
+	
+	total_pages = (total + limit - 1) // limit if total > 0 else 0
+	has_next = (start + len(data)) < total
+	has_previous = page > 1
+	
+	return {
+		"message": {
+			"data": data,
+			"page": page,
+			"page_size": limit,
+			"total": total,
+			"total_pages": total_pages,
+			"has_next": has_next,
+			"has_previous": has_previous
+		}
+	}
+
+
+@frappe.whitelist()
+def get_project_by_id(project_id=None, name=None):
+	"""
+	Get a single Real Estate Project by ID (or project_name).
+	"""
+	pid = project_id or name
+	if not pid:
+		frappe.throw(_("Project ID is required"))
+		
+	if not frappe.db.exists("Real Estate Project", pid):
+		frappe.throw(_("Project not found"))
+		
+	doc = frappe.get_doc("Real Estate Project", pid)
+	project_dict = get_compact_project(doc, return_all_fields=True)
+	
+	# Add child tables
+	if hasattr(doc, 'gallery'):
+		project_dict['gallery'] = []
+		for item in doc.gallery:
+			project_dict['gallery'].append({
+				'image': item.image,
+				'description': item.description
+			})
+			
+	return {
+		"message": project_dict
+	}
+
+
+@frappe.whitelist()
+def create_project(**kwargs):
+	"""
+	Create a new Real Estate Project.
+	"""
+	try:
+		doc = frappe.new_doc("Real Estate Project")
+		doc.update(kwargs)
+		doc.insert()
+		return get_compact_project(doc, return_all_fields=True)
+	except Exception as e:
+		frappe.log_error(f"Error creating project: {str(e)}", "Create Project Error")
+		frappe.throw(_("Failed to create project: {0}").format(str(e)))
+
+
+@frappe.whitelist()
+def update_project(project_id, **kwargs):
+	"""
+	Update an existing Real Estate Project.
+	"""
+	if not project_id:
+		frappe.throw(_("Project ID is required"))
+	
+	try:
+		doc = frappe.get_doc("Real Estate Project", project_id)
+		doc.update(kwargs)
+		doc.save()
+		return get_compact_project(doc, return_all_fields=True)
+	except Exception as e:
+		frappe.log_error(f"Error updating project: {str(e)}", "Update Project Error")
+		frappe.throw(_("Failed to update project: {0}").format(str(e)))
+
+
+@frappe.whitelist()
+def delete_project(project_id):
+	"""
+	Delete a Real Estate Project.
+	"""
+	if not project_id:
+		frappe.throw(_("Project ID is required"))
+		
+	try:
+		frappe.delete_doc("Real Estate Project", project_id)
+		return {"status": "success", "message": _("Project deleted successfully")}
+	except Exception as e:
+		frappe.log_error(f"Error deleting project: {str(e)}", "Delete Project Error")
+		frappe.throw(_("Failed to delete project: {0}").format(str(e)))

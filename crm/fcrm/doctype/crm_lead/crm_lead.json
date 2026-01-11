@@ -1,752 +1,759 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "autoname": "naming_series:",
- "creation": "2025-09-07 01:03:51.103613",
- "default_view": "List",
- "doctype": "DocType",
- "editable_grid": 1,
- "email_append_to": 1,
- "engine": "InnoDB",
- "field_order": [
-  "details",
-  "lead_details_section",
-  "status",
-  "industry",
-  "territory",
-  "job_title",
-  "source",
-  "assigned_to_display",
-  "assigned_date",
-  "lead_owner",
-  "fb_adset_id",
-  "fb_campaign_id",
-  "fb_form_id",
-  "fb_campaign_name",
-  "fb_form_name",
-  "fb_ad_id",
-  "campaign",
-  "last_contacted",
-  "request",
-  "column_break_skia",
-  "feedback",
-  "project",
-  "project_unit",
-  "single_unit",
-  "duplicate_details_section",
-  "is_duplicate",
-  "duplicated_from",
-  "duplicate_leads",
-  "person_tab",
-  "lead_person_section",
-  "salutation",
-  "first_name",
-  "last_name",
-  "email",
-  "mobile_no",
-  "created",
-  "best_time_contacte",
-  "organization_tab",
-  "section_break_uixv",
-  "naming_series",
-  "lead_name",
-  "middle_name",
-  "gender",
-  "phone",
-  "original_lead",
-  "custom_meta_lead_id",
-  "column_break_dbsv",
-  "website",
-  "organization",
-  "delayed",
-  "no_of_employees",
-  "annual_revenue",
-  "image",
-  "converted",
-  "lead_score",
-  "lead_rating",
-  "rating_reason",
-  "products_tab",
-  "products",
-  "section_break_ggwh",
-  "total",
-  "column_break_uisv",
-  "net_total",
-  "sla_tab",
-  "sla",
-  "sla_creation",
-  "column_break_ffnp",
-  "sla_status",
-  "communication_status",
-  "response_details_section",
-  "response_by",
-  "column_break_pweh",
-  "first_response_time",
-  "first_responded_on",
-  "log_tab",
-  "status_change_log",
-  "tab_7_tab",
-  "property_preference_section",
-  "property_preference_details",
-  "core_preference_section",
-  "property_usage",
-  "residential_type",
-  "commercial_type",
-  "administrative_type",
-  "space",
-  "noof_bathrooms",
-  "noof_bedrooms",
-  "column_break_tyoj",
-  "condition",
-  "finishing",
-  "built_year",
-  "pool",
-  "garage",
-  "modern_kitchen",
-  "budget",
-  "payment",
-  "ownership"
- ],
- "fields": [
-  {
-   "default": "CRM-LEAD-.YYYY.-",
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "CRM-LEAD-.YYYY.-"
-  },
-  {
-   "fieldname": "salutation",
-   "fieldtype": "Link",
-   "label": "Salutation",
-   "options": "Salutation"
-  },
-  {
-   "fieldname": "first_name",
-   "fieldtype": "Data",
-   "label": "First Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "middle_name",
-   "fieldtype": "Data",
-   "label": "Middle Name"
-  },
-  {
-   "fieldname": "last_name",
-   "fieldtype": "Data",
-   "label": "Last Name"
-  },
-  {
-   "fieldname": "gender",
-   "fieldtype": "Link",
-   "label": "Gender",
-   "options": "Gender"
-  },
-  {
-   "default": "New",
-   "fieldname": "status",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Status",
-   "options": "CRM Lead Status",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "email",
-   "fieldtype": "Data",
-   "label": "Email",
-   "options": "Email",
-   "search_index": 1
-  },
-  {
-   "fieldname": "website",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Website"
-  },
-  {
-   "fieldname": "mobile_no",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Phone",
-   "options": "Phone",
-   "reqd": 1
-  },
-  {
-   "fieldname": "phone",
-   "fieldtype": "Data",
-   "label": "Other Phone",
-   "options": "Phone"
-  },
-  {
-   "fieldname": "section_break_uixv",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_dbsv",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "no_of_employees",
-   "fieldtype": "Select",
-   "label": "No. of Employees",
-   "options": "1-10\n11-50\n51-200\n201-500\n501-1000\n1000+"
-  },
-  {
-   "fieldname": "annual_revenue",
-   "fieldtype": "Currency",
-   "hidden": 1,
-   "label": "Annual Revenue"
-  },
-  {
-   "fieldname": "assigned_date",
-   "fieldtype": "Data",
-   "label": "Assigned date"
-  },
-  {
-   "fieldname": "lead_owner",
-   "fieldtype": "Link",
-   "label": "Lead Owner",
-   "options": "User",
-   "permlevel": 2
-  },
-  {
-   "fieldname": "source",
-   "fieldtype": "Link",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Source",
-   "options": "CRM Lead Source",
-   "remember_last_selected_value": 1
-  },
-  {
-   "fieldname": "industry",
-   "fieldtype": "Link",
-   "label": "Industry",
-   "options": "CRM Industry"
-  },
-  {
-   "fieldname": "image",
-   "fieldtype": "Attach Image",
-   "hidden": 1,
-   "label": "Image",
-   "print_hide": 1
-  },
-  {
-   "fieldname": "lead_name",
-   "fieldtype": "Data",
-   "label": "Full Name",
-   "search_index": 1
-  },
-  {
-   "fieldname": "job_title",
-   "fieldtype": "Data",
-   "label": "Job Title"
-  },
-  {
-   "fieldname": "organization_tab",
-   "fieldtype": "Tab Break",
-   "label": "Others"
-  },
-  {
-   "fieldname": "organization",
-   "fieldtype": "Data",
-   "label": "Organization"
-  },
-  {
-   "default": "0",
-   "fieldname": "converted",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Converted"
-  },
-  {
-   "fieldname": "person_tab",
-   "fieldtype": "Tab Break",
-   "label": "Person"
-  },
-  {
-   "fieldname": "details",
-   "fieldtype": "Tab Break",
-   "label": "Details"
-  },
-  {
-   "fieldname": "sla_tab",
-   "fieldtype": "Tab Break",
-   "hidden": 1,
-   "label": "SLA",
-   "read_only": 1
-  },
-  {
-   "fieldname": "sla",
-   "fieldtype": "Link",
-   "label": "SLA",
-   "options": "CRM Service Level Agreement"
-  },
-  {
-   "fieldname": "sla_creation",
-   "fieldtype": "Datetime",
-   "label": "SLA Creation",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_ffnp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "sla_status",
-   "fieldtype": "Select",
-   "label": "Lead Origin",
-   "options": "\u0639\u0645\u064a\u0644 \u0634\u0631\u0643\u0629\n\u0639\u0645\u064a\u0644 \u0645\u0648\u0638\u0641",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "delayed",
-   "fieldtype": "Check",
-   "label": "Delayed"
-  },
-  {
-   "fieldname": "response_details_section",
-   "fieldtype": "Section Break",
-   "label": "Response Details"
-  },
-  {
-   "fieldname": "response_by",
-   "fieldtype": "Datetime",
-   "label": "Response By",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_pweh",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "first_response_time",
-   "fieldtype": "Duration",
-   "label": "First Response Time",
-   "read_only": 1
-  },
-  {
-   "fieldname": "first_responded_on",
-   "fieldtype": "Datetime",
-   "label": "First Responded On",
-   "read_only": 1
-  },
-  {
-   "default": "Open",
-   "fieldname": "communication_status",
-   "fieldtype": "Link",
-   "label": "Communication Status",
-   "options": "CRM Communication Status"
-  },
-  {
-   "fieldname": "territory",
-   "fieldtype": "Link",
-   "label": "Territory",
-   "options": "CRM Territory"
-  },
-  {
-   "fieldname": "log_tab",
-   "fieldtype": "Tab Break",
-   "label": "Log",
-   "read_only": 1
-  },
-  {
-   "fieldname": "status_change_log",
-   "fieldtype": "Table",
-   "label": "Status Change Log",
-   "options": "CRM Status Change Log"
-  },
-  {
-   "fieldname": "products_tab",
-   "fieldtype": "Tab Break",
-   "hidden": 1,
-   "label": "Products"
-  },
-  {
-   "fieldname": "products",
-   "fieldtype": "Table",
-   "label": "Products",
-   "options": "CRM Products"
-  },
-  {
-   "fieldname": "section_break_ggwh",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "total",
-   "fieldtype": "Currency",
-   "label": "Total",
-   "options": "currency",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_uisv",
-   "fieldtype": "Column Break"
-  },
-  {
-   "description": "Total after discount",
-   "fieldname": "net_total",
-   "fieldtype": "Currency",
-   "label": "Net Total",
-   "options": "currency",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "is_duplicate",
-   "fieldtype": "Check",
-   "label": "Duplicate",
-   "permlevel": 2,
-   "read_only": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "duplicated_from",
-   "fieldtype": "Link",
-   "label": "From",
-   "link_filters": "[[\"CRM Lead\",\"is_duplicate\",\"=\",1]]",
-   "options": "CRM Lead",
-   "permlevel": 2,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "duplicate_leads",
-   "fieldtype": "Table",
-   "label": "Duplicate Leads",
-   "options": "Duplicate Lead Entry",
-   "permlevel": 2
-  },
-  {
-   "default": "0",
-   "description": "Lead has Duplicates",
-   "fieldname": "original_lead",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Original Lead",
-   "read_only": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "last_contacted",
-   "fieldtype": "Date",
-   "label": "Last Contacted Date"
-  },
-  {
-   "fieldname": "campaign",
-   "fieldtype": "Link",
-   "label": "Marketing Campaign",
-   "options": "CRM Campaign"
-  },
-  {
-   "fieldname": "tab_7_tab",
-   "fieldtype": "Tab Break",
-   "label": "Property Preference"
-  },
-  {
-   "fieldname": "property_preference_details",
-   "fieldtype": "Table",
-   "hidden": 1,
-   "label": "Property Preference Details",
-   "options": "Property Preference"
-  },
-  {
-   "fieldname": "property_preference_section",
-   "fieldtype": "Section Break",
-   "label": "Property Preference"
-  },
-  {
-   "fieldname": "lead_score",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "label": "Lead Score",
-   "read_only": 1
-  },
-  {
-   "fieldname": "lead_rating",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Lead Rating",
-   "options": "\nHot\nWarm\nCold",
-   "read_only": 1
-  },
-  {
-   "fieldname": "rating_reason",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Rating Reason",
-   "read_only": 1
-  },
-  {
-   "fieldname": "request",
-   "fieldtype": "Text",
-   "label": "Request"
-  },
-  {
-   "default": "00:00:00",
-   "fieldname": "best_time_contacte",
-   "fieldtype": "Small Text",
-   "label": "Best Time To Contact"
-  },
-  {
-   "fieldname": "assigned_to_display",
-   "fieldtype": "Data",
-   "in_filter": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Assigned To"
-  },
-  {
-   "fieldname": "column_break_skia",
-   "fieldtype": "Column Break"
-  },
-  {
-   "description": "FeedBack field for old data please add comment instead ",
-   "fieldname": "feedback",
-   "fieldtype": "Text",
-   "label": "FeedBack"
-  },
-  {
-   "fieldname": "core_preference_section",
-   "fieldtype": "Section Break",
-   "label": "Core Preference"
-  },
-  {
-   "fieldname": "property_usage",
-   "fieldtype": "Select",
-   "label": "Property Usage",
-   "options": "\nResidential\nCommercial\nAdministrative"
-  },
-  {
-   "depends_on": "eval:doc.property_usage==\"Residential\"\n",
-   "fieldname": "residential_type",
-   "fieldtype": "Select",
-   "label": "Residential Type",
-   "options": "\nApartments / Flats\nDuplexes\nPenthouses\nStandalone Villas\nTwin Houses\nTownhouses\nStudios\nChalets (in coastal projects)\nCompound Units"
-  },
-  {
-   "depends_on": "eval:doc.property_usage==\"Commercial\"\n",
-   "fieldname": "commercial_type",
-   "fieldtype": "Select",
-   "label": "Commercial Type ",
-   "options": "\nRetail Shops\nShopping Malls / Centers\nShowrooms\nRestaurants & Caf\u00e9s\nWarehouses / Storage\nCommercial Parking"
-  },
-  {
-   "depends_on": "eval:doc.property_usage==\"Administrative\"\n",
-   "fieldname": "administrative_type",
-   "fieldtype": "Select",
-   "label": "Administrative Type ",
-   "options": "\nOffices\nTowers\nCorporate Headquarters\nBank Branches\nBusiness / Office Centers"
-  },
-  {
-   "fieldname": "space",
-   "fieldtype": "Float",
-   "label": "Space"
-  },
-  {
-   "fieldname": "noof_bathrooms",
-   "fieldtype": "Int",
-   "label": "No.of Bathrooms"
-  },
-  {
-   "fieldname": "noof_bedrooms",
-   "fieldtype": "Int",
-   "label": "No.of Bedrooms"
-  },
-  {
-   "fieldname": "column_break_tyoj",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "condition",
-   "fieldtype": "Small Text",
-   "label": "Condition"
-  },
-  {
-   "fieldname": "finishing",
-   "fieldtype": "Select",
-   "label": "Finishing"
-  },
-  {
-   "fieldname": "built_year",
-   "fieldtype": "Date",
-   "label": "Built Year"
-  },
-  {
-   "default": "0",
-   "fieldname": "pool",
-   "fieldtype": "Check",
-   "label": "Pool"
-  },
-  {
-   "default": "0",
-   "fieldname": "garage",
-   "fieldtype": "Check",
-   "label": "Garage "
-  },
-  {
-   "default": "0",
-   "fieldname": "modern_kitchen",
-   "fieldtype": "Check",
-   "label": "Modern Kitchen "
-  },
-  {
-   "fieldname": "budget",
-   "fieldtype": "Currency",
-   "label": "Budget "
-  },
-  {
-   "fieldname": "payment",
-   "fieldtype": "Select",
-   "label": "Payment"
-  },
-  {
-   "fieldname": "ownership",
-   "fieldtype": "Data",
-   "label": "Ownership"
-  },
-  {
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "label": "Project",
-   "options": "Real Estate Project"
-  },
-  {
-   "fieldname": "duplicate_details_section",
-   "fieldtype": "Section Break",
-   "label": "Duplicate Details"
-  },
-  {
-   "fieldname": "single_unit",
-   "fieldtype": "Link",
-   "label": "Single Unit",
-   "options": "Unit"
-  },
-  {
-   "fieldname": "lead_details_section",
-   "fieldtype": "Section Break",
-   "label": "Lead Details"
-  },
-  {
-   "fieldname": "lead_person_section",
-   "fieldtype": "Section Break",
-   "label": "Lead Person"
-  },
-  {
-   "fieldname": "custom_meta_lead_id",
-   "fieldtype": "Data",
-   "label": "Meta Lead ID"
-  },
-  {
-   "fieldname": "project_unit",
-   "fieldtype": "Data",
-   "label": "Project Unit",
-   "options": "Project Unit"
-  },
-  {
-   "fieldname": "created",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Created On",
-   "read_only": 1
-  },
-  {
-   "fieldname": "fb_adset_id",
-   "fieldtype": "Data",
-   "label": "FB adset_id"
-  },
-  {
-   "fieldname": "fb_campaign_id",
-   "fieldtype": "Data",
-   "label": "FB campaign_id"
-  },
-  {
-   "fieldname": "fb_form_id",
-   "fieldtype": "Data",
-   "label": "FB form_id"
-  },
-  {
-   "fieldname": "fb_campaign_name",
-   "fieldtype": "Data",
-   "label": "FB campaign_name"
-  },
-  {
-   "fieldname": "fb_form_name",
-   "fieldtype": "Data",
-   "label": "FB form_name"
-  },
-  {
-   "fieldname": "fb_ad_id",
-   "fieldtype": "Data",
-   "label": "FB ad_id"
-  }
- ],
- "grid_page_length": 50,
- "image_field": "image",
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-12-28 13:48:04.086359",
- "modified_by": "Administrator",
- "module": "FCRM",
- "name": "CRM Lead",
- "naming_rule": "By \"Naming Series\" field",
- "owner": "Administrator",
- "permissions": [
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Sales User",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Sales Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "All",
-   "share": 1,
-   "write": 1
-  }
- ],
- "quick_entry": 1,
- "row_format": "Dynamic",
- "sender_field": "email",
- "sender_name_field": "first_name",
- "show_name_in_global_search": 1,
- "show_preview_popup": 1,
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": [],
- "title_field": "lead_name",
- "track_changes": 1,
- "track_seen": 1
+    "actions": [],
+    "allow_import": 1,
+    "allow_rename": 1,
+    "autoname": "naming_series:",
+    "creation": "2025-09-07 01:03:51.103613",
+    "default_view": "List",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "email_append_to": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "details",
+        "lead_details_section",
+        "status",
+        "industry",
+        "territory",
+        "job_title",
+        "source",
+        "assigned_to_display",
+        "assigned_date",
+        "lead_owner",
+        "fb_adset_id",
+        "fb_campaign_id",
+        "fb_form_id",
+        "fb_campaign_name",
+        "fb_form_name",
+        "fb_ad_id",
+        "campaign",
+        "last_contacted",
+        "request",
+        "column_break_skia",
+        "feedback",
+        "project",
+        "project_unit",
+        "single_unit",
+        "duplicate_details_section",
+        "is_duplicate",
+        "duplicated_from",
+        "duplicate_leads",
+        "person_tab",
+        "lead_person_section",
+        "salutation",
+        "first_name",
+        "last_name",
+        "email",
+        "mobile_no",
+        "created",
+        "best_time_contacte",
+        "organization_tab",
+        "section_break_uixv",
+        "naming_series",
+        "lead_name",
+        "middle_name",
+        "gender",
+        "phone",
+        "original_lead",
+        "custom_meta_lead_id",
+        "column_break_dbsv",
+        "website",
+        "organization",
+        "delayed",
+        "no_of_employees",
+        "annual_revenue",
+        "image",
+        "converted",
+        "lead_score",
+        "lead_rating",
+        "rating_reason",
+        "products_tab",
+        "products",
+        "section_break_ggwh",
+        "total",
+        "column_break_uisv",
+        "net_total",
+        "sla_tab",
+        "sla",
+        "sla_creation",
+        "column_break_ffnp",
+        "sla_status",
+        "communication_status",
+        "response_details_section",
+        "response_by",
+        "column_break_pweh",
+        "first_response_time",
+        "first_responded_on",
+        "log_tab",
+        "status_change_log",
+        "tab_7_tab",
+        "property_preference_section",
+        "property_preference_details",
+        "core_preference_section",
+        "property_usage",
+        "residential_type",
+        "commercial_type",
+        "administrative_type",
+        "space",
+        "noof_bathrooms",
+        "noof_bedrooms",
+        "column_break_tyoj",
+        "condition",
+        "finishing",
+        "built_year",
+        "pool",
+        "garage",
+        "modern_kitchen",
+        "budget",
+        "payment",
+        "ownership"
+    ],
+    "fields": [
+        {
+            "default": "CRM-LEAD-.YYYY.-",
+            "fieldname": "naming_series",
+            "fieldtype": "Select",
+            "label": "Series",
+            "options": "CRM-LEAD-.YYYY.-"
+        },
+        {
+            "fieldname": "salutation",
+            "fieldtype": "Link",
+            "label": "Salutation",
+            "options": "Salutation"
+        },
+        {
+            "fieldname": "first_name",
+            "fieldtype": "Data",
+            "label": "First Name",
+            "reqd": 1
+        },
+        {
+            "fieldname": "middle_name",
+            "fieldtype": "Data",
+            "label": "Middle Name"
+        },
+        {
+            "fieldname": "last_name",
+            "fieldtype": "Data",
+            "label": "Last Name"
+        },
+        {
+            "fieldname": "gender",
+            "fieldtype": "Link",
+            "label": "Gender",
+            "options": "Gender"
+        },
+        {
+            "default": "New",
+            "fieldname": "status",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "options": "CRM Lead Status",
+            "reqd": 1,
+            "search_index": 1
+        },
+        {
+            "fieldname": "email",
+            "fieldtype": "Data",
+            "label": "Email",
+            "options": "Email",
+            "search_index": 1
+        },
+        {
+            "fieldname": "website",
+            "fieldtype": "Data",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Website"
+        },
+        {
+            "fieldname": "mobile_no",
+            "fieldtype": "Data",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Phone",
+            "options": "Phone",
+            "reqd": 1
+        },
+        {
+            "fieldname": "phone",
+            "fieldtype": "Data",
+            "label": "Other Phone",
+            "options": "Phone"
+        },
+        {
+            "fieldname": "section_break_uixv",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "column_break_dbsv",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "no_of_employees",
+            "fieldtype": "Select",
+            "label": "No. of Employees",
+            "options": "1-10\n11-50\n51-200\n201-500\n501-1000\n1000+"
+        },
+        {
+            "fieldname": "annual_revenue",
+            "fieldtype": "Currency",
+            "hidden": 1,
+            "label": "Annual Revenue"
+        },
+        {
+            "fieldname": "assigned_date",
+            "fieldtype": "Data",
+            "label": "Assigned date"
+        },
+        {
+            "fieldname": "lead_owner",
+            "fieldtype": "Link",
+            "label": "Lead Owner",
+            "options": "User",
+            "permlevel": 2
+        },
+        {
+            "fieldname": "source",
+            "fieldtype": "Link",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Source",
+            "options": "CRM Lead Source",
+            "remember_last_selected_value": 1
+        },
+        {
+            "fieldname": "industry",
+            "fieldtype": "Link",
+            "label": "Industry",
+            "options": "CRM Industry"
+        },
+        {
+            "fieldname": "image",
+            "fieldtype": "Attach Image",
+            "hidden": 1,
+            "label": "Image",
+            "print_hide": 1
+        },
+        {
+            "fieldname": "lead_name",
+            "fieldtype": "Data",
+            "label": "Full Name",
+            "search_index": 1
+        },
+        {
+            "fieldname": "job_title",
+            "fieldtype": "Data",
+            "label": "Job Title"
+        },
+        {
+            "fieldname": "organization_tab",
+            "fieldtype": "Tab Break",
+            "label": "Others"
+        },
+        {
+            "fieldname": "organization",
+            "fieldtype": "Data",
+            "label": "Organization"
+        },
+        {
+            "default": "0",
+            "fieldname": "converted",
+            "fieldtype": "Check",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Converted"
+        },
+        {
+            "fieldname": "person_tab",
+            "fieldtype": "Tab Break",
+            "label": "Person"
+        },
+        {
+            "fieldname": "details",
+            "fieldtype": "Tab Break",
+            "label": "Details"
+        },
+        {
+            "fieldname": "sla_tab",
+            "fieldtype": "Tab Break",
+            "hidden": 1,
+            "label": "SLA",
+            "read_only": 1
+        },
+        {
+            "fieldname": "sla",
+            "fieldtype": "Link",
+            "label": "SLA",
+            "options": "CRM Service Level Agreement"
+        },
+        {
+            "fieldname": "sla_creation",
+            "fieldtype": "Datetime",
+            "label": "SLA Creation",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_ffnp",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "sla_status",
+            "fieldtype": "Select",
+            "label": "Lead Origin",
+            "options": "\u0639\u0645\u064a\u0644 \u0634\u0631\u0643\u0629\n\u0639\u0645\u064a\u0644 \u0645\u0648\u0638\u0641",
+            "read_only": 1
+        },
+        {
+            "default": "0",
+            "fieldname": "delayed",
+            "fieldtype": "Check",
+            "label": "Delayed"
+        },
+        {
+            "fieldname": "response_details_section",
+            "fieldtype": "Section Break",
+            "label": "Response Details"
+        },
+        {
+            "fieldname": "response_by",
+            "fieldtype": "Datetime",
+            "label": "Response By",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_pweh",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "first_response_time",
+            "fieldtype": "Duration",
+            "label": "First Response Time",
+            "read_only": 1
+        },
+        {
+            "fieldname": "first_responded_on",
+            "fieldtype": "Datetime",
+            "label": "First Responded On",
+            "read_only": 1
+        },
+        {
+            "default": "Open",
+            "fieldname": "communication_status",
+            "fieldtype": "Link",
+            "label": "Communication Status",
+            "options": "CRM Communication Status"
+        },
+        {
+            "fieldname": "territory",
+            "fieldtype": "Link",
+            "label": "Territory",
+            "options": "CRM Territory"
+        },
+        {
+            "fieldname": "log_tab",
+            "fieldtype": "Tab Break",
+            "label": "Log",
+            "read_only": 1
+        },
+        {
+            "fieldname": "status_change_log",
+            "fieldtype": "Table",
+            "label": "Status Change Log",
+            "options": "CRM Status Change Log"
+        },
+        {
+            "fieldname": "products_tab",
+            "fieldtype": "Tab Break",
+            "hidden": 1,
+            "label": "Products"
+        },
+        {
+            "fieldname": "products",
+            "fieldtype": "Table",
+            "label": "Products",
+            "options": "CRM Products"
+        },
+        {
+            "fieldname": "section_break_ggwh",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "total",
+            "fieldtype": "Currency",
+            "label": "Total",
+            "options": "currency",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_uisv",
+            "fieldtype": "Column Break"
+        },
+        {
+            "description": "Total after discount",
+            "fieldname": "net_total",
+            "fieldtype": "Currency",
+            "label": "Net Total",
+            "options": "currency",
+            "read_only": 1
+        },
+        {
+            "default": "0",
+            "fieldname": "is_duplicate",
+            "fieldtype": "Check",
+            "label": "Duplicate",
+            "permlevel": 2,
+            "read_only": 1,
+            "set_only_once": 1
+        },
+        {
+            "fieldname": "duplicated_from",
+            "fieldtype": "Link",
+            "label": "From",
+            "link_filters": "[[\"CRM Lead\",\"is_duplicate\",\"=\",1]]",
+            "options": "CRM Lead",
+            "permlevel": 2,
+            "set_only_once": 1
+        },
+        {
+            "fieldname": "duplicate_leads",
+            "fieldtype": "Table",
+            "label": "Duplicate Leads",
+            "options": "Duplicate Lead Entry",
+            "permlevel": 2
+        },
+        {
+            "default": "0",
+            "description": "Lead has Duplicates",
+            "fieldname": "original_lead",
+            "fieldtype": "Check",
+            "hidden": 1,
+            "label": "Original Lead",
+            "read_only": 1,
+            "set_only_once": 1
+        },
+        {
+            "fieldname": "last_contacted",
+            "fieldtype": "Date",
+            "label": "Last Contacted Date"
+        },
+        {
+            "fieldname": "campaign",
+            "fieldtype": "Link",
+            "label": "Marketing Campaign",
+            "options": "CRM Campaign"
+        },
+        {
+            "fieldname": "tab_7_tab",
+            "fieldtype": "Tab Break",
+            "label": "Property Preference"
+        },
+        {
+            "fieldname": "property_preference_details",
+            "fieldtype": "Table",
+            "hidden": 1,
+            "label": "Property Preference Details",
+            "options": "Property Preference"
+        },
+        {
+            "fieldname": "property_preference_section",
+            "fieldtype": "Section Break",
+            "label": "Property Preference"
+        },
+        {
+            "fieldname": "lead_score",
+            "fieldtype": "Int",
+            "hidden": 1,
+            "label": "Lead Score",
+            "read_only": 1
+        },
+        {
+            "fieldname": "lead_rating",
+            "fieldtype": "Select",
+            "hidden": 1,
+            "label": "Lead Rating",
+            "options": "\nHot\nWarm\nCold",
+            "read_only": 1
+        },
+        {
+            "fieldname": "rating_reason",
+            "fieldtype": "Small Text",
+            "hidden": 1,
+            "label": "Rating Reason",
+            "read_only": 1
+        },
+        {
+            "fieldname": "request",
+            "fieldtype": "Text",
+            "label": "Request"
+        },
+        {
+            "default": "00:00:00",
+            "fieldname": "best_time_contacte",
+            "fieldtype": "Small Text",
+            "label": "Best Time To Contact"
+        },
+        {
+            "fieldname": "assigned_to_display",
+            "fieldtype": "Data",
+            "in_filter": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Assigned To"
+        },
+        {
+            "fieldname": "column_break_skia",
+            "fieldtype": "Column Break"
+        },
+        {
+            "description": "FeedBack field for old data please add comment instead ",
+            "fieldname": "feedback",
+            "fieldtype": "Text",
+            "label": "FeedBack"
+        },
+        {
+            "fieldname": "core_preference_section",
+            "fieldtype": "Section Break",
+            "label": "Core Preference"
+        },
+        {
+            "fieldname": "property_usage",
+            "fieldtype": "Select",
+            "label": "Property Usage",
+            "options": "\nResidential\nCommercial\nAdministrative"
+        },
+        {
+            "depends_on": "eval:doc.property_usage==\"Residential\"\n",
+            "fieldname": "residential_type",
+            "fieldtype": "Select",
+            "label": "Residential Type",
+            "options": "\nApartments / Flats\nDuplexes\nPenthouses\nStandalone Villas\nTwin Houses\nTownhouses\nStudios\nChalets (in coastal projects)\nCompound Units"
+        },
+        {
+            "depends_on": "eval:doc.property_usage==\"Commercial\"\n",
+            "fieldname": "commercial_type",
+            "fieldtype": "Select",
+            "label": "Commercial Type ",
+            "options": "\nRetail Shops\nShopping Malls / Centers\nShowrooms\nRestaurants & Caf\u00e9s\nWarehouses / Storage\nCommercial Parking"
+        },
+        {
+            "depends_on": "eval:doc.property_usage==\"Administrative\"\n",
+            "fieldname": "administrative_type",
+            "fieldtype": "Select",
+            "label": "Administrative Type ",
+            "options": "\nOffices\nTowers\nCorporate Headquarters\nBank Branches\nBusiness / Office Centers"
+        },
+        {
+            "fieldname": "space",
+            "fieldtype": "Float",
+            "label": "Space"
+        },
+        {
+            "fieldname": "noof_bathrooms",
+            "fieldtype": "Int",
+            "label": "No.of Bathrooms"
+        },
+        {
+            "fieldname": "noof_bedrooms",
+            "fieldtype": "Int",
+            "label": "No.of Bedrooms"
+        },
+        {
+            "fieldname": "column_break_tyoj",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "condition",
+            "fieldtype": "Small Text",
+            "label": "Condition"
+        },
+        {
+            "fieldname": "finishing",
+            "fieldtype": "Select",
+            "label": "Finishing"
+        },
+        {
+            "fieldname": "built_year",
+            "fieldtype": "Date",
+            "label": "Built Year"
+        },
+        {
+            "default": "0",
+            "fieldname": "pool",
+            "fieldtype": "Check",
+            "label": "Pool"
+        },
+        {
+            "default": "0",
+            "fieldname": "garage",
+            "fieldtype": "Check",
+            "label": "Garage "
+        },
+        {
+            "default": "0",
+            "fieldname": "modern_kitchen",
+            "fieldtype": "Check",
+            "label": "Modern Kitchen "
+        },
+        {
+            "fieldname": "budget",
+            "fieldtype": "Currency",
+            "label": "Budget "
+        },
+        {
+            "fieldname": "payment",
+            "fieldtype": "Select",
+            "label": "Payment"
+        },
+        {
+            "fieldname": "ownership",
+            "fieldtype": "Data",
+            "label": "Ownership"
+        },
+        {
+            "fieldname": "project",
+            "fieldtype": "Link",
+            "label": "Project",
+            "options": "Real Estate Project"
+        },
+        {
+            "fieldname": "duplicate_details_section",
+            "fieldtype": "Section Break",
+            "label": "Duplicate Details"
+        },
+        {
+            "fieldname": "single_unit",
+            "fieldtype": "Link",
+            "label": "Single Unit",
+            "options": "Unit"
+        },
+        {
+            "fieldname": "lead_details_section",
+            "fieldtype": "Section Break",
+            "label": "Lead Details"
+        },
+        {
+            "fieldname": "lead_person_section",
+            "fieldtype": "Section Break",
+            "label": "Lead Person"
+        },
+        {
+            "fieldname": "custom_meta_lead_id",
+            "fieldtype": "Data",
+            "label": "Meta Lead ID"
+        },
+        {
+            "fieldname": "project_unit",
+            "fieldtype": "Data",
+            "label": "Project Unit",
+            "options": "Project Unit"
+        },
+        {
+            "fieldname": "created",
+            "fieldtype": "Date",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Created On",
+            "read_only": 1
+        },
+        {
+            "fieldname": "fb_adset_id",
+            "fieldtype": "Data",
+            "label": "FB adset_id"
+        },
+        {
+            "fieldname": "fb_campaign_id",
+            "fieldtype": "Data",
+            "label": "FB campaign_id"
+        },
+        {
+            "fieldname": "fb_form_id",
+            "fieldtype": "Data",
+            "label": "FB form_id"
+        },
+        {
+            "fieldname": "fb_campaign_name",
+            "fieldtype": "Data",
+            "label": "FB campaign_name"
+        },
+        {
+            "fieldname": "fb_form_name",
+            "fieldtype": "Data",
+            "label": "FB form_name"
+        },
+        {
+            "fieldname": "fb_ad_id",
+            "fieldtype": "Data",
+            "label": "FB ad_id"
+        },
+        {
+            "fieldname": "last_comment",
+            "fieldtype": "Small Text",
+            "label": "Latest Comment",
+            "read_only": 1,
+            "in_list_view": 1
+        }
+    ],
+    "grid_page_length": 50,
+    "image_field": "image",
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2025-12-28 13:48:04.086359",
+    "modified_by": "Administrator",
+    "module": "FCRM",
+    "name": "CRM Lead",
+    "naming_rule": "By \"Naming Series\" field",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Sales User",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Sales Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "All",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "quick_entry": 1,
+    "row_format": "Dynamic",
+    "sender_field": "email",
+    "sender_name_field": "first_name",
+    "show_name_in_global_search": 1,
+    "show_preview_popup": 1,
+    "sort_field": "creation",
+    "sort_order": "DESC",
+    "states": [],
+    "title_field": "lead_name",
+    "track_changes": 1,
+    "track_seen": 1
 }

@@ -1109,9 +1109,9 @@ watch(
 
     const ensured = [...cols]
 
-    if (!ensured.some(c => (c.key || c.value) === 'latest_comment')) {
+    if (!ensured.some(c => (c.key || c.value) === 'last_comment')) {
       ensured.push({
-        key: 'latest_comment',
+        key: 'last_comment',
         label: __('Latest Comment'),
         type: 'Data',
         width: 600,

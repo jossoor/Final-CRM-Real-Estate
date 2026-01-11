@@ -7,7 +7,7 @@ from collections.abc import Iterable
 import frappe
 from frappe import _
 from bs4 import BeautifulSoup
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, strip_html
 
 from crm.fcrm.doctype.crm_notification.crm_notification import notify_user
 
@@ -25,6 +25,9 @@ def on_update(self, method=None):
     """
     # إشعارات المنشنز
     notify_mentions(self)
+    
+    # تحديث حقل last_comment في الـ Lead
+    update_lead_last_comment(self)
 
     # منطق delayed مربوط فقط على تعليقات "Comment" المرتبطة بمستند
     try:
@@ -181,3 +184,33 @@ def add_attachments(name: str, attachments: Iterable[str | dict]) -> None:
         _file = frappe.new_doc("File")
         _file.update(file_args)
         _file.save(ignore_permissions=True)
+
+
+def update_lead_last_comment(doc):
+    """
+    Update last_comment field in CRM Lead when a comment is added
+    """
+    try:
+        if doc.reference_doctype != "CRM Lead" or not doc.reference_name:
+            return
+
+        # Ensure we're dealing with a Comment type
+        if doc.comment_type != "Comment":
+            return
+
+        content = doc.content
+        if not content:
+            return
+
+        # Strip HTML tags
+        clean_content = strip_html(content)
+        
+        # Truncate if necessary (Small Text is usually 65535 chars, but good to be safe for display)
+        if len(clean_content) > 140:
+             clean_content = clean_content[:137] + "..."
+
+        frappe.db.set_value("CRM Lead", doc.reference_name, "last_comment", clean_content)
+        
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "update_lead_last_comment failed")
+

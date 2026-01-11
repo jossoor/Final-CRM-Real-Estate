@@ -396,6 +396,12 @@ class CRMLead(Document):
 				"key": "modified",
 				"width": "8rem",
 			},
+			{
+				"label": "Latest Comment",
+				"type": "Small Text",
+				"key": "last_comment",
+				"width": "40rem",
+			},
 		]
 		rows = [
 			"name",
@@ -413,6 +419,7 @@ class CRMLead(Document):
 			"modified",
 			"_assign",
 			"image",
+			"last_comment",
 		]
 		return {"columns": columns, "rows": rows}
 
@@ -448,7 +455,7 @@ def get_lead_list():
     """Custom API to always return leads with status"""
     leads = frappe.get_all(
         "CRM Lead",
-        fields=["name", "lead_name", "status", "mobile_no", "lead_owner", "modified"],
+        fields=["name", "lead_name", "status", "mobile_no", "lead_owner", "modified", "last_comment"],
         order_by="creation desc",
         limit_page_length=50
     )

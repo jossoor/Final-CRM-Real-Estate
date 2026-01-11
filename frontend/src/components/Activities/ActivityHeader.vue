@@ -17,7 +17,7 @@
       <span>{{ __('New Email') }}</span>
     </Button>
     <Button
-      v-else-if="title == 'FeedBacks'"
+      v-else-if="title == 'Comments'"
       variant="solid"
       @click="emailBox.showComment = true"
     >

@@ -64,7 +64,7 @@ import {
 } from '@/composables/settings'
 import { Dialog, Avatar } from 'frappe-ui'
 import { ref, markRaw, computed, watch, h } from 'vue'
-import AssignmentRulePage from './AssignmentRules/AssignmentRulePage.vue'
+
 
 const { isManager, isTelephonyAgent, getUser } = usersStore()
 
