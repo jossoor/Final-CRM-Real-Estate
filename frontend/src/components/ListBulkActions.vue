@@ -107,7 +107,8 @@ function convertToDeal(selections, unselectAll) {
 }
 
 function deleteValues(selections, unselectAll) {
-  const selectedDocs = Array.from(selections)
+  const selectedDocs = selections instanceof Set ? Array.from(selections) : (Array.isArray(selections) ? selections : [])
+  unselectAllAction.value = unselectAll
   if (selectedDocs.length == 1) {
     showDeleteDocModal.value = {
       showLinkedDocsModal: true,
@@ -129,8 +130,7 @@ function assignValues(selections, unselectAll) {
   shouldClearExisting.value = false
   bulkAssignees.value = []
   showAssignmentModal.value = true
-  // Convert Set to Array if needed
-  selectedValues.value = selections instanceof Set ? Array.from(selections) : (Array.isArray(selections) ? selections : [])
+  selectedValues.value = selections
   unselectAllAction.value = unselectAll
 }
 
@@ -139,8 +139,7 @@ function clearAssignemnts(selections, unselectAll) {
   shouldClearExisting.value = true
   bulkAssignees.value = [] // Start with empty assignees (clearing old assignments)
   showAssignmentModal.value = true
-  // Convert Set to Array if needed
-  selectedValues.value = selections instanceof Set ? Array.from(selections) : (Array.isArray(selections) ? selections : [])
+  selectedValues.value = selections
   unselectAllAction.value = unselectAll
 }
 
@@ -202,9 +201,19 @@ function bulkActions(selections, unselectAll) {
 }
 
 function reload(unselectAll) {
-  unselectAllAction.value?.()
-  unselectAll?.()
-  list.value?.reload()
+  if (typeof unselectAllAction.value === 'function') {
+    unselectAllAction.value()
+  }
+  if (typeof unselectAll === 'function') {
+    unselectAll()
+  }
+  
+  // Add a small delay to ensure backend changes are committed and reflected
+  setTimeout(() => {
+    if (list.value && typeof list.value.reload === 'function') {
+      list.value.reload()
+    }
+  }, 300)
 }
 
 onMounted(async () => {
@@ -227,5 +236,9 @@ onMounted(async () => {
 defineExpose({
   bulkActions,
   customListActions,
+  editValues,
+  deleteValues,
+  assignValues,
+  convertToDeal,
 })
 </script>

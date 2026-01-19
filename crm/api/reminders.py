@@ -590,78 +590,97 @@ def get_delayed_map(lead_names: str | list):
     - يحترم صلاحيات القراءة للمستخدم الحالي.
     """
     import json
+    try:
+        if isinstance(lead_names, str):
+            try:
+                names = json.loads(lead_names)
+            except json.JSONDecodeError:
+                frappe.throw(_("Invalid list of lead names provided."))
+        else:
+            names = lead_names
 
-    if isinstance(lead_names, str):
-        try:
-            names = json.loads(lead_names)
-        except json.JSONDecodeError:
-            frappe.throw(_("Invalid list of lead names provided."))
-    else:
-        names = lead_names
+        if not names:
+            return {}
 
-    if not names:
-        return {}
+        unique_names = []
+        seen = set()
+        for name in names:
+            if not name or name in seen:
+                continue
+            seen.add(name)
+            unique_names.append(name)
 
-    unique_names = []
-    seen = set()
-    for name in names:
-        if not name or name in seen:
-            continue
-        seen.add(name)
-        unique_names.append(name)
-
-    if len(unique_names) > DELAYED_BATCH_LIMIT:
-        frappe.throw(
-            _("You can request at most {0} leads at once (received {1}).").format(
-                DELAYED_BATCH_LIMIT, len(unique_names)
+        if len(unique_names) > DELAYED_BATCH_LIMIT:
+            frappe.throw(
+                _("You can request at most {0} leads at once (received {1}).").format(
+                    DELAYED_BATCH_LIMIT, len(unique_names)
+                )
             )
-        )
 
-    readable_leads = [
-        name
-        for name in unique_names
-        if frappe.has_permission("CRM Lead", "read", doc=name)
-    ]
-    if not readable_leads:
-        return {}
+        readable_leads = [
+            name
+            for name in unique_names
+            if frappe.has_permission("CRM Lead", "read", doc=name)
+        ]
+        if not readable_leads:
+            return {}
 
-    delayed_map = {name: 0 for name in readable_leads}
+        delayed_map = {name: 0 for name in readable_leads}
 
-    schema = _reminder_schema()
-    now = now_datetime()
-    params = {"leads": readable_leads, "now": now}
-    where_clauses = [
-        f"`{schema['ref_dt']}` = 'CRM Lead'",
-        f"`{schema['ref_nm']}` IN %(leads)s",
-        "`remind_at` < %(now)s",
-    ]
+        schema = _reminder_schema()
+        now = now_datetime()
+        params = {"leads": readable_leads, "now": now}
+        where_clauses = [
+            f"`{schema['ref_dt']}` = 'CRM Lead'",
+            f"`{schema['ref_nm']}` IN %(leads)s",
+            "`remind_at` < %(now)s",
+        ]
 
-    if schema.get("has_user"):
-        params["user"] = frappe.session.user
-        where_clauses.append("`user` = %(user)s")
-    if schema.get("has_status"):
-        params["statuses"] = ["Open", "Scheduled"]
-        where_clauses.append("`status` IN %(statuses)s")
+        if schema.get("has_user"):
+            params["user"] = frappe.session.user
+            where_clauses.append("`user` = %(user)s")
+        if schema.get("has_status"):
+            params["statuses"] = ["Open", "Scheduled"]
+            where_clauses.append("`status` IN %(statuses)s")
 
-    reminders_query = f"""
-        SELECT `{schema['ref_nm']}` AS name, MAX(`remind_at`) AS latest_remind_at
-        FROM `tab{REMINDER_DT}`
-        WHERE {' AND '.join(where_clauses)}
-        GROUP BY `{schema['ref_nm']}`
-    """
-    latest_reminders = frappe.db.sql(reminders_query, params, as_dict=True)
-    reminders_map = {row.name: row.latest_remind_at for row in latest_reminders}
+        reminders_query = f"""
+            SELECT `{schema['ref_nm']}` AS name, MAX(`remind_at`) AS latest_remind_at
+            FROM `tab{REMINDER_DT}`
+            WHERE {' AND '.join(where_clauses)}
+            GROUP BY `{schema['ref_nm']}`
+        """
+        latest_reminders = frappe.db.sql(reminders_query, params, as_dict=True)
+        reminders_map = {row.name: row.latest_remind_at for row in latest_reminders}
 
-    if not reminders_map:
-        return delayed_map
+        if not reminders_map:
+            return delayed_map
 
-    leads_with_reminders = list(reminders_map.keys())
-    col = _comment_delay_field()
+        leads_with_reminders = list(reminders_map.keys())
+        col = _comment_delay_field()
 
-    if col:
-        comment_rows = frappe.db.sql(
-            f"""
-            SELECT `reference_name` AS name, MAX(`{col}`) AS is_delayed
+        if col:
+            comment_rows = frappe.db.sql(
+                f"""
+                SELECT `reference_name` AS name, MAX(`{col}`) AS is_delayed
+                FROM `tabComment`
+                WHERE `reference_doctype` = 'CRM Lead'
+                  AND `reference_name` IN %(leads)s
+                  AND `comment_type` = 'Comment'
+                GROUP BY `reference_name`
+                """,
+                {"leads": leads_with_reminders},
+                as_dict=True,
+            )
+            delayed_from_comments = {row.name: bool(row.is_delayed) for row in comment_rows}
+
+            for lead_name in leads_with_reminders:
+                if delayed_from_comments.get(lead_name):
+                    delayed_map[lead_name] = 1
+            return delayed_map
+
+        latest_comments = frappe.db.sql(
+            """
+            SELECT `reference_name` AS name, MAX(`creation`) AS latest_comment_at
             FROM `tabComment`
             WHERE `reference_doctype` = 'CRM Lead'
               AND `reference_name` IN %(leads)s
@@ -671,31 +690,15 @@ def get_delayed_map(lead_names: str | list):
             {"leads": leads_with_reminders},
             as_dict=True,
         )
-        delayed_from_comments = {row.name: bool(row.is_delayed) for row in comment_rows}
+        comments_map = {row.name: row.latest_comment_at for row in latest_comments}
 
         for lead_name in leads_with_reminders:
-            if delayed_from_comments.get(lead_name):
+            reminder_date = reminders_map.get(lead_name)
+            comment_date = comments_map.get(lead_name)
+            if reminder_date and (not comment_date or comment_date < reminder_date):
                 delayed_map[lead_name] = 1
+
         return delayed_map
-
-    latest_comments = frappe.db.sql(
-        """
-        SELECT `reference_name` AS name, MAX(`creation`) AS latest_comment_at
-        FROM `tabComment`
-        WHERE `reference_doctype` = 'CRM Lead'
-          AND `reference_name` IN %(leads)s
-          AND `comment_type` = 'Comment'
-        GROUP BY `reference_name`
-        """,
-        {"leads": leads_with_reminders},
-        as_dict=True,
-    )
-    comments_map = {row.name: row.latest_comment_at for row in latest_comments}
-
-    for lead_name in leads_with_reminders:
-        reminder_date = reminders_map.get(lead_name)
-        comment_date = comments_map.get(lead_name)
-        if reminder_date and (not comment_date or comment_date < reminder_date):
-            delayed_map[lead_name] = 1
-
-    return delayed_map
+    except Exception as e:
+        frappe.log_error(title="get_delayed_map failure", message=frappe.get_traceback())
+        raise e

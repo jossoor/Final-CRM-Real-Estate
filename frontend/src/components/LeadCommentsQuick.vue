@@ -201,7 +201,7 @@ async function loadReminders() {
   try {
     const list = await call('frappe.client.get_list', {
       doctype: 'Reminder',
-      fields: ['name', 'user', 'description', 'remind_at', 'status', 'notified'],
+      fields: ['name', 'user', 'description', 'remind_at', 'notified'],
       filters: [
         ['Reminder', 'reference_doctype', '=', 'CRM Lead'],
         ['Reminder', 'reference_name', '=', props.leadName],
@@ -218,7 +218,7 @@ async function loadReminders() {
     // جرّب سكيمة reminder_*
     const list2 = await call('frappe.client.get_list', {
       doctype: 'Reminder',
-      fields: ['name', 'user', 'description', 'remind_at', 'status', 'notified'],
+      fields: ['name', 'user', 'description', 'remind_at', 'notified'],
       filters: [
         ['Reminder', 'reminder_doctype', '=', 'CRM Lead'],
         ['Reminder', 'reminder_docname', '=', props.leadName],

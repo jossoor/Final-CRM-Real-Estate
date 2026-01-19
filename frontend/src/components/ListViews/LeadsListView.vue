@@ -9,7 +9,9 @@
       resizeColumn: options.resizeColumn,
     }"
     row-key="name"
-    @update:selections="(selections) => emit('selectionsChanged', selections)"
+    ref="listViewRef"
+    v-model:selections="selections"
+    :key="listViewKey"
   >
     <ListHeader class="sm:mx-5 mx-3" @columnWidthUpdated="emit('columnWidthUpdated')">
       <ListHeaderItem
@@ -273,17 +275,60 @@
         </ListRowItem>
       </div>
     </ListRows>
-    <ListSelectBanner>
-      <template #actions="{ selections, unselectAll }">
-        <Dropdown
-          :options="listBulkActionsRef.bulkActions(selections, unselectAll)"
-        >
-          <Button icon="more-horizontal" variant="ghost" />
-        </Dropdown>
-      </template>
-    </ListSelectBanner>
-
   </ListView>
+
+  <!-- Custom Floating Selection Bar -->
+  <transition name="slide-up">
+    <div
+      v-if="selections.size > 0"
+      class="fixed bottom-10 left-1/2 z-[100] flex -translate-x-1/2 items-center gap-6 rounded-2xl bg-[#1e2128] px-6 py-3 shadow-2xl ring-1 ring-white/10"
+    >
+      <!-- Selection Count Badge -->
+      <div class="flex items-center gap-3 border-r border-white/10 pr-6">
+        <div
+          class="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-xs font-bold text-white"
+        >
+          {{ selections.size }}
+        </div>
+        <span class="text-sm font-medium text-white">{{ __('Leads Selected') }}</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-1">
+        <button
+          class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/5 active:bg-white/10"
+          @click="listBulkActionsRef.assignValues(selections, unselectAll)"
+        >
+          <FeatherIcon name="user-plus" class="h-4 w-4" />
+          <span>{{ __('Assign Lead') }}</span>
+        </button>
+
+        <button
+          class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/5 active:bg-white/10"
+          @click="listBulkActionsRef.editValues(selections, unselectAll)"
+        >
+          <FeatherIcon name="edit-2" class="h-4 w-4 text-blue-400" />
+          <span>{{ __('Edit') }}</span>
+        </button>
+
+        <button
+          class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/5 active:bg-white/10"
+          @click="listBulkActionsRef.deleteValues(selections, unselectAll)"
+        >
+          <FeatherIcon name="trash-2" class="h-4 w-4 text-red-400" />
+          <span>{{ __('Delete') }}</span>
+        </button>
+      </div>
+
+      <!-- Close/Unselect Button -->
+      <button
+        class="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+        @click="unselectAll"
+      >
+        <FeatherIcon name="x" class="h-4 w-4" />
+      </button>
+    </div>
+  </transition>
 
   <CustomListFooter
     v-if="pageLengthCount"
@@ -355,6 +400,24 @@ const route = useRoute()
 const pageLengthCount = defineModel()
 const list = defineModel('list')
 
+const listViewRef = ref(null)
+const selections = ref(new Set())
+
+const listViewKey = ref(0) // Used to force-reset ListView if needed
+
+function updateSelections(val) {
+  selections.value = val
+  emit('selectionsChanged', val)
+}
+
+function unselectAll() {
+  console.log('LeadsListView: unselectAll called')
+  selections.value = new Set()
+  emit('selectionsChanged', new Set())
+  // Force a re-render of ListView to clear internal checkboxes
+  listViewKey.value++
+}
+
 const isLikeFilterApplied = computed(() => {
   return list.value?.params?.filters?._liked_by ? true : false
 })
@@ -365,6 +428,12 @@ const { statusOptions } = statusesStore()
 // Available statuses - filtered to show only specific statuses
 const allowedStatusList = [
   'New',
+  'Contacted',
+  'Nurture',
+  'Qualified',
+  'Unqualified',
+  'Showing',
+  'Other',
   'Follow Up',
   'Follow Up To Meeting',
   'No Answer',
@@ -414,6 +483,12 @@ defineExpose({
 function getStatusClass(status) {
   const statusMap = {
     'New': 'status-new',
+    'Contacted': 'status-contacted',
+    'Nurture': 'status-nurture',
+    'Qualified': 'status-qualified',
+    'Unqualified': 'status-unqualified',
+    'Showing': 'status-showing',
+    'Other': 'status-other',
     'Follow Up': 'status-follow-up',
     'Follow Up To Meeting': 'status-follow-up-to-meeting',
     'No Answer': 'status-no-answer',
@@ -424,12 +499,6 @@ function getStatusClass(status) {
     'low budget': 'status-low-budget',
     'Reservation': 'status-reservation',
     'Done Deal': 'status-done-deal',
-    // Legacy statuses (for old leads)
-    'Reschedule meeting': 'status-legacy',
-    'Not Available': 'status-legacy',
-    'Qualified': 'status-legacy',
-    'Visiting': 'status-legacy',
-    'wrong number': 'status-legacy',
     'Junk': 'status-junk'
   }
   
@@ -441,38 +510,37 @@ async function updateStatus(leadName, newStatus, currentItem, row) {
   console.log('🔄 Updating status...', { leadName, newStatus })
 
   try {
-    const result = await call('frappe.client.set_value', {
-      doctype: 'CRM Lead',
+    // Perform the database update using our custom API to bypass potentially broken hooks
+    await call('crm.api.doc.update_lead_status', {
       name: leadName,
-      fieldname: 'status',
-      value: newStatus,
+      status: newStatus,
     })
 
-    console.log('✅ Database updated successfully:', result)
+    console.log('✅ Database updated successfully via custom API')
 
-    // Update the local item values
+    // 1. Update the local row data IMMEDIATELY for instant UI feedback
+    if (row) {
+      row.status = newStatus
+    }
+    
+    // 2. Update the cell item if it exists
     if (currentItem) {
       currentItem.value = newStatus
       currentItem.label = newStatus
     }
 
-    // Update row data if available
-    if (row && row.status) {
-      row.status = newStatus
-    }
-
-    // Show success message
+    // 3. Show success message
     if (window.$notify) {
       window.$notify({
-        title: 'Status Updated',
-        message: `Status changed to ${newStatus} for ${leadName}`,
+        title: __('Status Updated'),
+        message: __('Status changed to {0} for {1}', [newStatus, leadName]),
         type: 'success',
       })
     }
 
-    // Reload the list to reflect changes
-    if (list.value?.reload) {
-      list.value.reload()
+    // 4. Reload the list resource to ensure all derived fields/meta are correct
+    if (list.value && typeof list.value.reload === 'function') {
+      await list.value.reload()
     }
   } catch (error) {
     console.error('❌ Failed to update status:', error)
@@ -659,6 +727,48 @@ function sendSMS(number) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23c2410c' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
 }
 
+/* Contacted - Light Blue */
+.status-contacted {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%230369a1' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+}
+
+/* Nurture - Amber */
+.status-nurture {
+  background-color: #fef3c7;
+  color: #b45309;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23b45309' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+}
+
+/* Qualified - Emerald */
+.status-qualified {
+  background-color: #d1fae5;
+  color: #047857;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23047857' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+}
+
+/* Unqualified - Slate */
+.status-unqualified {
+  background-color: #f1f5f9;
+  color: #475569;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23475569' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+}
+
+/* Showing - Pink */
+.status-showing {
+  background-color: #fce7f3;
+  color: #be185d;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23be185d' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+}
+
+/* Other - Neutral */
+.status-other {
+  background-color: #f3f4f6;
+  color: #374151;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23374151' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+}
+
 .status-junk {
   background-color: #fee2e2; /* soft red background */
   color: #b91c1c; /* strong red text */
@@ -713,5 +823,17 @@ function sendSMS(number) {
 .status-dropdown option:disabled {
   color: #9ca3af;
   font-style: italic;
+}
+
+/* Custom Floating Bar Styles */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translate(-50%, 100%);
+  opacity: 0;
 }
 </style>
