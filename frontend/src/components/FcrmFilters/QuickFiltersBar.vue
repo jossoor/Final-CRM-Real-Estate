@@ -40,6 +40,24 @@
           <FeatherIcon name="x" class="h-4 w-4 opacity-70" />
           <span class="truncate">{{ __('Clear') }}</span>
         </button>
+
+        <!-- Columns Settings -->
+        <ColumnSettings
+          v-if="localList && doctype"
+          v-model="localList"
+          :doctype="doctype"
+          :hideLabel="true"
+          @update="(obj) => $emit('update-columns', obj)"
+        />
+
+        <!-- Refresh button -->
+        <Button
+          class="!h-9"
+          :tooltip="__('Refresh')"
+          :icon="RefreshIcon"
+          :loading="isRefreshing"
+          @click="refreshData"
+        />
       </div>
 
       <!-- Divider -->
@@ -48,74 +66,83 @@
       <!-- RIGHT: chips -->
       <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
         <!-- Status -->
-        <Dropdown
-          class="shrink-0"
-          :key="'status-' + normalizedStatusList.length"
-          :options="statusDropdownOptions"
-          variant="ghost"
-          placement="bottom-start"
-        >
-          <template #default>
-            <button
-              class="inline-flex h-9 items-center justify-between gap-2
-                     rounded-lg border border-gray-300 bg-white px-2.5 text-sm font-medium text-gray-700 shadow-sm
-                     hover:bg-gray-50 active:bg-gray-100
-                     dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700
-                     min-w-[8rem] max-w-[11rem] leading-[1.1rem] text-left"
-              type="button"
-            >
-              <div class="flex items-center gap-1 truncate">
-                <span class="inline-flex h-2.5 w-2.5 rounded-full" :class="statusDotClass"></span>
-                <span class="truncate max-w-[7rem] text-left">{{ statusLabel }}</span>
-              </div>
-              <FeatherIcon name="chevron-down" class="h-4 w-4 flex-shrink-0 opacity-60" />
-            </button>
-          </template>
-        </Dropdown>
+        <div class="flex h-7 items-center rounded bg-gray-100 dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+          <Dropdown
+            class="h-full"
+            :key="'status-' + normalizedStatusList.length"
+            :options="statusDropdownOptions"
+            variant="ghost"
+            placement="bottom-start"
+          >
+            <template #default="{ open }">
+              <button
+                class="flex h-full items-center gap-1.5 px-2 rounded-l cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+              >
+                <div :class="['h-2 w-2 rounded-full', statusDotClass]"></div>
+                <span class="max-w-[120px] truncate">{{ statusLabel }}</span>
+              </button>
+            </template>
+          </Dropdown>
+          <button
+            v-if="status"
+            @click.stop="clearStatus"
+            class="flex h-full items-center px-1.5 rounded-r hover:bg-black/10 dark:hover:bg-white/10"
+          >
+            <FeatherIcon name="x" class="h-3 w-3 opacity-50 hover:opacity-100" />
+          </button>
+          <div v-else class="pr-2 pointer-events-none flex items-center">
+            <FeatherIcon name="chevron-down" class="h-4 w-4 opacity-50" />
+          </div>
+        </div>
 
         <!-- Project -->
-        <Dropdown
-          class="shrink-0"
-          :key="'project-' + normalizedProjectList.length"
-          :options="projectDropdownOptions"
-          variant="ghost"
-          placement="bottom-start"
-        >
-          <template #default>
-            <button
-              class="inline-flex h-9 items-center justify-between gap-2
-                     rounded-lg border border-gray-300 bg-white px-2.5 text-sm font-medium text-gray-700 shadow-sm
-                     hover:bg-gray-50 active:bg-gray-100
-                     dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700
-                     min-w-[8rem] max-w-[11rem] leading-[1.1rem] text-left"
-              type="button"
-            >
-              <div class="flex items-center gap-1 truncate">
-                <FeatherIcon name="folder" class="h-4 w-4 opacity-70" />
-                <span class="truncate max-w-[7rem] text-left">{{ projectChipText }}</span>
-              </div>
-              <FeatherIcon name="chevron-down" class="h-4 w-4 flex-shrink-0 opacity-60" />
-            </button>
-          </template>
-        </Dropdown>
+        <div class="flex h-7 items-center rounded bg-gray-100 dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+          <Dropdown
+            class="h-full"
+            :options="projectDropdownOptions"
+          >
+            <template #default="{ open }">
+              <button
+                class="flex h-full items-center gap-1.5 px-2 rounded-l cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+              >
+                <FeatherIcon name="briefcase" class="h-3.5 w-3.5 opacity-70" />
+                <span class="max-w-[120px] truncate">{{ projectChipText }}</span>
+              </button>
+            </template>
+          </Dropdown>
+          <button
+            v-if="projectValue"
+            @click.stop="clearProject"
+            class="flex h-full items-center px-1.5 rounded-r hover:bg-black/10 dark:hover:bg-white/10"
+          >
+            <FeatherIcon name="x" class="h-3 w-3 opacity-50 hover:opacity-100" />
+          </button>
+          <div v-else class="pr-2 pointer-events-none flex items-center">
+            <FeatherIcon name="chevron-down" class="h-4 w-4 opacity-50" />
+          </div>
+        </div>
 
         <!-- Last Contacted -->
-        <div class="relative shrink-0" ref="popoverRef">
-          <button
-            class="inline-flex h-9 items-center justify-between gap-2
-                   rounded-lg border border-gray-300 bg-white px-2.5 text-sm font-medium text-gray-700 shadow-sm
-                   hover:bg-gray-50 active:bg-gray-100
-                   dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700
-                   min-w-[10rem] max-w-[14rem] leading-[1.1rem] text-left"
-            type="button"
-            @click="togglePopover"
-          >
-            <div class="flex items-center gap-1 truncate">
-              <FeatherIcon name="calendar" class="h-4 w-4 opacity-70" />
-              <span class="truncate max-w-[9rem] text-left">{{ displayDateRange }}</span>
+        <div class="relative" ref="popoverRef">
+          <div class="flex h-7 items-center rounded bg-gray-100 dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+            <button
+              @click="togglePopover"
+              class="flex h-full items-center gap-1.5 px-2 rounded-l cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              <FeatherIcon name="calendar" class="h-3.5 w-3.5 opacity-70" />
+              <span class="max-w-[150px] truncate">{{ displayDateRange }}</span>
+            </button>
+            <button
+              v-if="lastFrom || lastTo"
+              @click.stop="clearLastContacted"
+              class="flex h-full items-center px-1.5 rounded-r hover:bg-black/10 dark:hover:bg-white/10"
+            >
+              <FeatherIcon name="x" class="h-3 w-3 opacity-50 hover:opacity-100" />
+            </button>
+            <div v-else class="pr-2 pointer-events-none flex items-center">
+              <FeatherIcon name="chevron-down" class="h-4 w-4 opacity-50" />
             </div>
-            <FeatherIcon name="chevron-down" class="h-4 w-4 flex-shrink-0 opacity-60" />
-          </button>
+          </div>
 
           <transition name="fade">
             <div
@@ -189,30 +216,7 @@
           </transition>
         </div>
 
-        <!-- Lead Owner -->
-        <Dropdown
-          class="shrink-0"
-          :options="ownerDropdownOptions"
-          variant="ghost"
-          placement="bottom-start"
-        >
-          <template #default>
-            <button
-              class="inline-flex h-9 items-center justify-between gap-2
-                     rounded-lg border border-gray-300 bg-white px-2.5 text-sm font-medium text-gray-700 shadow-sm
-                     hover:bg-gray-50 active:bg-gray-100
-                     dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700
-                     min-w-[8rem] max-w-[11rem] leading-[1.1rem] text-left"
-              type="button"
-            >
-              <div class="flex items-center gap-1 truncate">
-                <FeatherIcon name="user" class="h-4 w-4 opacity-70" />
-                <span class="truncate max-w-[7rem] text-left">{{ ownerLabel }}</span>
-              </div>
-              <FeatherIcon name="chevron-down" class="h-4 w-4 flex-shrink-0 opacity-60" />
-            </button>
-          </template>
-        </Dropdown>
+
       </div>
     </div>
   </div>
@@ -220,8 +224,10 @@
 
 <script setup>
 import { reactive, computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { Dropdown, FeatherIcon } from 'frappe-ui'
+import { Dropdown, FeatherIcon, Button } from 'frappe-ui'
 import { useDebounceFn } from '@vueuse/core'
+import ColumnSettings from '@/components/ColumnSettings.vue'
+import RefreshIcon from '@/components/Icons/RefreshIcon.vue'
 
 // Arabic/English helpers
 function normalizeDigits(s='') {
@@ -242,11 +248,22 @@ const props = defineProps({
   projectField: { type: String, default: 'project' },
   ownerField:   { type: String, default: 'lead_owner' },
   lastContactField: { type: String, default: '' },
+  list: { type: Object, default: null },
+  doctype: { type: String, default: 'CRM Lead' },
 })
-const emit = defineEmits(['filters-change', 'like-change', 'open-all'])
+const emit = defineEmits(['filters-change', 'like-change', 'open-all', 'update-columns', 'refresh', 'clear-all'])
 
 /* 🔗 Shared model with parent (the `ui` object) */
 const ui = defineModel({ type: Object, default: () => ({}) })
+
+/* Local writable ref for list prop (needed for v-model in ColumnSettings) */
+const localList = computed({
+  get: () => props.list,
+  set: (val) => {
+    // ColumnSettings will update via the @update event, not by setting
+    // This setter exists to satisfy v-model requirements
+  }
+})
 
 /* ---------- computed proxies into ui ---------- */
 const search = computed({
@@ -254,8 +271,8 @@ const search = computed({
   set: v  => { ui.value.search = v ?? '' }
 })
 const status = computed({
-  get: () => ui.value.status || 'all',
-  set: v  => { ui.value.status = (v === 'all' ? '' : v) }
+  get: () => ui.value.status || '',
+  set: v  => { ui.value.status = v || '' }
 })
 const projectValue = computed({
   get: () => ui.value.project || '',
@@ -293,8 +310,8 @@ const normalizedProjectList = computed(() => normalizeOptions(lists.project))
 const normalizedOwnerList   = computed(() => normalizeOptions(lists.owner))
 
 watch(() => normalizedStatusList.value, () => {
-  if (status.value !== 'all' && !normalizedStatusList.value.find(s => s.value === status.value))
-    status.value = 'all'
+  if (status.value && !normalizedStatusList.value.find(s => s.value === status.value))
+    status.value = ''
 })
 watch(() => normalizedProjectList.value, () => {
   if (projectValue.value && !normalizedProjectList.value.find(p => p.value === projectValue.value)) {
@@ -319,7 +336,6 @@ const statusDropdownOptions = computed(() => [{
   group: 'Status',
   hideLabel: true,
   items: [
-    { label: __('All status'), onClick: () => { status.value = 'all'; pushFilters() } },
     ...normalizedStatusList.value.map(opt => ({ label: opt.label, onClick: () => { status.value = opt.value; pushFilters() } })),
   ],
 }])
@@ -358,7 +374,7 @@ const ownerDropdownOptions = computed(() => [{
 }])
 
 /* labels / styles */
-const statusLabel = computed(() => status.value === 'all' ? __('Status') : status.value)
+const statusLabel = computed(() => status.value || __('Status'))
 const projectChipText = computed(() => {
   const hit = normalizedProjectList.value.find(o => o.value === projectValue.value)
   return hit?.label || __('Project')
@@ -377,12 +393,35 @@ const displayDateRange = computed(() => {
   return __('Last Contacted')
 })
 const statusDotClass = computed(() => {
-  if (status.value === 'all') return 'bg-gray-300'
+  if (!status.value) return 'bg-gray-300'
   if (/qualif/i.test(status.value)) return 'bg-green-500'
   if (/new/i.test(status.value))    return 'bg-blue-500'
   if (/disqual|junk|not/i.test(status.value)) return 'bg-yellow-500'
   return 'bg-gray-400'
 })
+
+/* CLEAR INDIVIDUAL FILTERS */
+function clearStatus() {
+  status.value = ''
+  pushFilters()
+}
+function clearProject() {
+  projectValue.value = ''
+  pushFilters()
+}
+function clearOwner() {
+  owner.value = 'all'
+  pushFilters()
+}
+function clearLastContacted() {
+  lastFrom.value = ''
+  lastTo.value = ''
+  pushFilters()
+}
+
+/**
+ * Watchers for lists
+ */
 
 /* payload for list API */
 function buildFiltersPayload() {
@@ -398,7 +437,7 @@ function buildFiltersPayload() {
   }
 
   // Status
-  if (status.value !== 'all') {
+  if (status.value) {
     filters.push({ fieldname: props.statusField, operator: '=', value: status.value })
   }
 
@@ -457,14 +496,47 @@ function pushFilters() {
 
 /* CLEAR ALL */
 function clearAll() {
+  // Reset all UI values
   search.value = ''
-  status.value = 'all'
+  status.value = ''
   projectValue.value = ''
   owner.value = 'all'
   lastFrom.value = ''
   lastTo.value = ''
-  emit('like-change', [])
-  emit('filters-change', buildFiltersPayload())
+  
+  // Clear all filters via parent handler
+  emit('clear-all')
+  
+
+}
+
+/* REFRESH DATA */
+const isRefreshing = ref(false)
+
+async function refreshData() {
+  console.debug('[QuickFiltersBar] refreshData: emitting refresh event')
+  isRefreshing.value = true
+  
+  try {
+    emit('refresh')
+    
+    // Direct fallback: reload viewControls if available
+    const vcRef = window?.__LEADS_VIEWCONTROLS__
+    if (vcRef) {
+      const vc = vcRef.value ?? vcRef
+      if (typeof vc.reload === 'function') {
+        await vc.reload()
+        console.debug('[QuickFiltersBar] refreshData: direct reload invoked on viewControls')
+      }
+    }
+  } catch (e) {
+    console.warn('[QuickFiltersBar] refreshData: direct reload failed', e)
+  } finally {
+    // Reset loading state after a short delay
+    setTimeout(() => {
+      isRefreshing.value = false
+    }, 500)
+  }
 }
 
 /* LIKE search — instrumented + direct-fallback to viewControls */

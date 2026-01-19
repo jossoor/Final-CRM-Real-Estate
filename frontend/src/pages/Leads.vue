@@ -31,9 +31,14 @@
     :project-field="PROJECT_FIELD"
     owner-field="lead_owner"
     :last-contact-field="LAST_CONTACT_FIELD.fieldname"
+    :list="leads"
+    doctype="CRM Lead"
     @filters-change="applyFilters"
     @like-change="applyLike"
     @open-all="() => { showFilters = true }"
+    @update-columns="handleUpdateColumns"
+    @refresh="handleRefresh"
+    @clear-all="handleClearAll"
   />
 
   <!-- Drawer (All Filters) -->
@@ -59,7 +64,9 @@
     v-model:resizeColumn="triggerResize"
     v-model:updatedPageCount="updatedPageCount"
     doctype="CRM Lead"
+    :excluded_filters="excludedFilters"
     :options="{ allowedViews: ['list', 'group_by', 'kanban'], disablePersistence: false }"
+    hideUI="true"
   />
 
   <!-- Kanban View -->
@@ -481,8 +488,9 @@ async function fetchDistinctLeadProjects() {
       method: 'frappe.client.get_list',
       args: {
         doctype: 'CRM Lead',
-        fields: ['distinct project as name'],
+        fields: ['project as name'],
         filters: [['project', '!=', '']],
+        distinct: true,
         limit_page_length: 500,
         order_by: 'project asc'
       }
@@ -736,6 +744,19 @@ function toTuples(filters = []) {
     .map((f) => (Array.isArray(f) ? f : [DOC, f.fieldname, f.operator, f.value]))
 }
 
+const excludedFilters = computed(() => [
+  'status',
+  PROJECT_FIELD.value,
+
+  'assigned_to_display',
+  LAST_CONTACT_FIELD.value.fieldname,
+  'source',
+  'mobile_no',
+  'phone',
+  'created',
+  'website'
+])
+
 const LAST_CONTACT_FIELD = computed(() => {
   const fields = getLeadFields() || []
   const candidates = ['last_contacted_on', 'last_contacted', 'last_contact_date', 'last_contact']
@@ -805,58 +826,99 @@ function sanitizeFilters(arr = []) {
   return out
 }
 
+// apply route query -> filters for the Leads page
+// helper: map route.query to your internal filter payload
+
+
+function handleClearAll() {
+  const vc = viewControls.value
+  if (!vc) return
+
+  // Reset pagination
+  loadMore.value = 1
+  updatedPageCount.value = 20
+  
+  // Clear all filters (standard and like) in ONE go
+  if (typeof vc.applyFilter === 'function') {
+    vc.applyFilter({ filters: [], replace: true })
+  } else if (typeof vc.updateFilter === 'function') {
+    vc.updateFilter({})
+    if (typeof vc.clearLikeFilters === 'function') {
+      // If we must fallback, try to suppress reload if possible, or just accept it might be 2 calls?
+      // But ViewControls.updateFilter usually reloads.
+      // Better to prioritize applyFilter which usually handles replace.
+      vc.clearLikeFilters() 
+    }
+  }
+}
+
 /* ----------- FIXED: never dedupe away >= / <= ----------- */
 function applyFilters(filters = [], replace = false) {
+  // If filters come from QuickFiltersBar (via emit), we should rebuild from UI state
+  // to ensure we capture removals/clears.
+  // The 'filters' arg might be valid from other callers, but if it came from the
+  // QuickFiltersBar 'filters-change' event, we prefer the 'ui' source of truth.
+  // We can detect this by checking if we have a rebuildAllFilters available,
+  // OR just always rebuild if we are in a context where 'ui' is authoritative.
+  
+  // Since we just added rebuildAllFilters, let's use it if available and if we want a full refresh.
+  // However, applyFilters is also used by initial load.
+  
+  let validTuples = []
+  
+  // Strategy: If 'filters' is passed, it might be a partial update. 
+  // BUT for QuickFiltersBar, we want a full replace based on 'ui'.
+  // We can just rely on 'ui' always being up to date because QuickFiltersBar v-models it!
+  
+  const fullFilters = rebuildAllFilters()
+  
+  if (fullFilters.length) {
+     for (const f of fullFilters) {
+        if (!f?.fieldname || f.value === '' || f.value === null || f.value === undefined) continue
+        let value = f.value
+        if (f.fieldname === 'delayed') value = value ? 1 : 0
+        validTuples.push(['CRM Lead', f.fieldname, String(f.operator || '=').toLowerCase(), value])
+     }
+  } else {
+     // If no filters from UI, we might still have incoming 'filters' argument from somewhere else?
+     // Actually, let's just use the incoming 'filters' if 'ui' produced nothing (edge case),
+     // OR strictly follow 'ui' if we want it to be the master.
+     // Given the user issue "status not applied" (failed clear), strict 'ui' adherence is safer.
+  }
+
   const vc = viewControls.value
-  if (!vc) {
-    return
-  }
-
-  const DOC = 'CRM Lead'
-  const tuples = []
-
-  for (const f of (filters || [])) {
-    if (!f?.fieldname || f.value === '' || f.value === null || f.value === undefined) continue
-    // Convert value to proper type for Check fields (delayed is a Check field)
-    let value = f.value
-    if (f.fieldname === 'delayed') {
-      // Ensure delayed is 1 or 0 (not boolean)
-      value = value ? 1 : 0
-    }
-    tuples.push([DOC, f.fieldname, String(f.operator || '=').toLowerCase(), value])
-  }
+  if (!vc) return
 
   // pagination reset
   loadMore.value = 1
   updatedPageCount.value = 20
 
-  if (tuples.length === 0) {
-    // Clear filters if no filters provided
+  if (validTuples.length === 0) {
     try {
-      if (typeof vc.clearFilters === 'function') {
+      if (typeof vc.updateFilter === 'function') {
+        vc.updateFilter({})
+      } else if (typeof vc.clearFilters === 'function') {
         vc.clearFilters()
-        vc.reload?.()
       }
+      vc.reload?.()
     } catch (e) {
-      console.warn('[Leads] clearFilters failed (non-fatal):', e)
+      console.warn('[Leads] clearFilters failed:', e)
     }
     return
   }
 
   try {
     if (typeof vc.setFilters === 'function') {
-      // setFilters always replaces filters, which is what we want for query params
-      vc.setFilters(tuples)
+      vc.setFilters(validTuples)
     } else if (typeof vc.applyFilter === 'function') {
-      // Apply all filters at once with replace flag
-      vc.applyFilter({ filters: tuples, replace: replace })
+      // ALWAYS replace when applying from our master 'ui' state
+      vc.applyFilter({ filters: validTuples, replace: true })
     }
   } catch (e) {
     console.error('[Leads] apply/set filters error:', e)
   }
-
-  // Don't call reload here - setFilters/applyFilter already trigger reload
 }
+
 
 // apply route query -> filters for the Leads page
 
@@ -986,6 +1048,27 @@ function applyLike(list) {
   })
 }
 
+/* ---------- Columns & Refresh handlers ---------- */
+function handleUpdateColumns(obj) {
+  console.debug('[Leads] handleUpdateColumns:', obj)
+  const vc = viewControls.value
+  if (vc && typeof vc.updateColumns === 'function') {
+    vc.updateColumns(obj)
+  } else {
+    console.warn('[Leads] handleUpdateColumns: viewControls.updateColumns not available')
+  }
+}
+
+function handleRefresh() {
+  console.debug('[Leads] Refresh button clicked - reloading leads data')
+  const vc = viewControls.value
+  if (vc && typeof vc.reload === 'function') {
+    vc.reload()
+  } else {
+    console.warn('[Leads] handleRefresh: viewControls.reload not available')
+  }
+}
+
 /* ---------- Drawer (All Filters) ---------- */
 const showFilters = ref(false)
 const ui = reactive({
@@ -1025,22 +1108,7 @@ function toNum(v) {
   return Number.isFinite(n) ? n * mult : null
 }
 
-function applyFiltersFromPanel(draft = {}) {
-  Object.assign(ui, {
-    status:              firstKey(draft, ['status'], ''),
-    project:             firstKey(draft, ['project'], ''),
-    location:            firstKey(draft, ['territory','location','crm_location','lead_territory'], ''),
-    last_contacted_from: firstKey(draft, ['last_contacted_from','lastFrom','from_date'], ''),
-    last_contacted_to:   firstKey(draft, ['last_contacted_to','lastTo','to_date'], ''),
-    space_min:           firstKey(draft, ['space_min','spaceFrom','min_space','minSpace','area_min','min_area'], ui.space_min),
-    space_max:           firstKey(draft, ['space_max','spaceTo','max_space','maxSpace','area_max','max_area'], ui.space_max),
-    budget_min:          firstKey(draft, ['budget_min','budgetFrom','min_budget','minBudget','price_min','min_price','expected_budget_min'], ui.budget_min),
-    budget_max:          firstKey(draft, ['budget_max','budgetTo','max_budget','maxBudget','price_max','max_price','expected_budget_max'], ui.budget_max),
-    lead_source:         firstKey(draft, ['lead_source','source'], ''),
-    lead_origin:         firstKey(draft, ['lead_origin','origin'], ''),
-    lead_type:           firstKey(draft, ['lead_type','type'], ''),
-  })
-
+const rebuildAllFilters = () => {
   const bMin = toNum(ui.budget_min)
   const bMax = toNum(ui.budget_max)
   const sMin = toNum(ui.space_min)
@@ -1054,6 +1122,18 @@ function applyFiltersFromPanel(draft = {}) {
   if (ui.lead_source) F.push({ fieldname: SOURCE_FIELD.value, operator: '=', value: ui.lead_source })
   if (ui.lead_origin) F.push({ fieldname: 'lead_origin', operator: '=', value: ui.lead_origin })
   if (ui.lead_type)   F.push({ fieldname: 'lead_type',   operator: '=', value: ui.lead_type })
+  
+  // Owner
+  if (ui.owner && ui.owner !== 'all') {
+    if (ui.owner === 'me') {
+       const me = window?.frappe?.session?.user
+       if (me) F.push({ fieldname: 'lead_owner', operator: '=', value: me })
+    } else if (ui.owner === 'unassigned') {
+       F.push({ fieldname: '_assign', operator: 'is', value: 'not set' }) // Use "is not set" for unassigned
+    } else {
+       F.push({ fieldname: 'lead_owner', operator: '=', value: ui.owner })
+    }
+  }
 
   // Dates → >= / <= only
   if (ui.last_contacted_from) {
@@ -1072,8 +1152,29 @@ function applyFiltersFromPanel(draft = {}) {
   // Space
   if (sMin !== null) F.push({ fieldname: SPACE_FIELD.value, operator: '>=', value: sMin })
   if (sMax !== null) F.push({ fieldname: SPACE_FIELD.value, operator: '<=', value: sMax })
+  
+  return F
+}
 
-  applyFilters(F)
+function applyFiltersFromPanel(draft = {}) {
+  Object.assign(ui, {
+    status:              firstKey(draft, ['status'], ''),
+    project:             firstKey(draft, ['project'], ''),
+    location:            firstKey(draft, ['territory','location','crm_location','lead_territory'], ''),
+    last_contacted_from: firstKey(draft, ['last_contacted_from','lastFrom','from_date'], ''),
+    last_contacted_to:   firstKey(draft, ['last_contacted_to','lastTo','to_date'], ''),
+    space_min:           firstKey(draft, ['space_min','spaceFrom','min_space','minSpace','area_min','min_area'], ui.space_min),
+    space_max:           firstKey(draft, ['space_max','spaceTo','max_space','maxSpace','area_max','max_area'], ui.space_max),
+    budget_min:          firstKey(draft, ['budget_min','budgetFrom','min_budget','minBudget','price_min','min_price','expected_budget_min'], ui.budget_min),
+    budget_max:          firstKey(draft, ['budget_max','budgetTo','max_budget','maxBudget','price_max','max_price','expected_budget_max'], ui.budget_max),
+    lead_source:         firstKey(draft, ['lead_source','source'], ''),
+    lead_origin:         firstKey(draft, ['lead_origin','origin'], ''),
+    lead_type:           firstKey(draft, ['lead_type','type'], ''),
+  })
+
+  const F = rebuildAllFilters()
+  // Use replace=true to ensuring clearing works
+  applyFilters(F, true)
   showFilters.value = false
 }
 

@@ -15,6 +15,16 @@ from crm.fcrm.doctype.crm_form_script.crm_form_script import get_form_script
 from crm.utils import get_dynamic_linked_docs, get_linked_docs
 
 
+@frappe.whitelist()
+def update_lead_status(name: str, status: str):
+    if not frappe.has_permission("CRM Lead", "write", name):
+        frappe.throw(_("No permission to update lead status"), frappe.PermissionError)
+
+    frappe.db.set_value("CRM Lead", name, "status", status)
+    frappe.db.commit()
+    return {"name": name, "status": status}
+
+
 @frappe.whitelist(allow_guest=True)
 def sort_options(doctype: str):
     fields = frappe.get_meta(doctype).fields
@@ -876,99 +886,46 @@ def assign_without_rule(
     if not doctype:
         frappe.throw(_("doctype is required"))
 
-    # -------------------------
-    # Normalize assign_to
-    # -------------------------
+    frappe.logger("crm").debug(f"assign_without_rule started: doctype={doctype}, names={names}, assign_to={assign_to}")
+
+    # Normalize assign_to to a list of strings
     if isinstance(assign_to, str):
         try:
             assign_to = frappe.parse_json(assign_to)
         except Exception:
             assign_to = [assign_to]
-    elif not isinstance(assign_to, list):
+    if not isinstance(assign_to, list):
         assign_to = [assign_to] if assign_to else []
 
-    users = [u for u in assign_to if u]
+    users = [str(u) for u in assign_to if u]
     if not users:
         frappe.throw(_("assign_to is required and cannot be empty"))
 
-    # -------------------------
-    # Normalize document names
-    # -------------------------
+    # Normalize doc_names to a list of strings
     doc_names = []
-
+    if name:
+        doc_names.append(name)
+    
     if names:
         if isinstance(names, str):
             try:
-                names = frappe.parse_json(names)
+                parsed_names = frappe.parse_json(names)
+                if isinstance(parsed_names, list):
+                    doc_names.extend([str(n) for n in parsed_names if n])
+                else:
+                    doc_names.append(str(parsed_names))
             except Exception:
-                names = [names]
-        if not isinstance(names, list):
-            names = [names] if names else []
-        doc_names = [n for n in names if n]
-    elif name:
-        doc_names = [name]
+                doc_names.append(names)
+        elif isinstance(names, list):
+            doc_names.extend([str(n) for n in names if n])
+        else:
+            doc_names.append(str(names))
 
-    # fallback: kwargs keys
-    if not doc_names:
-        for key in ["names", "name", "selected_items", "selected", "items", "docnames", "document_names"]:
-            if key in kwargs and kwargs.get(key):
-                value = kwargs.get(key)
-                if isinstance(value, str):
-                    try:
-                        value = frappe.parse_json(value)
-                    except Exception:
-                        value = [value]
-                if isinstance(value, list):
-                    doc_names = [
-                        (item.get("name") if isinstance(item, dict) else str(item))
-                        for item in value
-                        if item
-                    ]
-                else:
-                    doc_names = [str(value)]
-                doc_names = [n for n in doc_names if n]
-                if doc_names:
-                    break
-
-    # fallback: form_dict keys
-    if not doc_names:
-        form_dict = frappe.form_dict or {}
-        for key in ["names", "name", "selected_items", "selected", "items", "docnames", "document_names"]:
-            if key in form_dict and form_dict.get(key):
-                value = form_dict.get(key)
-                if isinstance(value, str):
-                    try:
-                        value = frappe.parse_json(value)
-                    except Exception:
-                        value = [value]
-                if isinstance(value, list):
-                    doc_names = [
-                        (item.get("name") if isinstance(item, dict) else str(item))
-                        for item in value
-                        if item
-                    ]
-                else:
-                    doc_names = [str(value)]
-                doc_names = [n for n in doc_names if n]
-                if doc_names:
-                    break
+    # Deduplicate
+    doc_names = list(set([n for n in doc_names if n]))
 
     if not doc_names:
-        try:
-            frappe.log_error(
-                f"assign_without_rule: missing 'name' or 'names' param. doctype={doctype}",
-                "assign_without_rule missing names",
-            )
-        except Exception:
-            pass
-
-        frappe.throw(
-            _(
-                "Either 'name' (for single document) or 'names' (for bulk assignment) parameter is required. "
-                "For bulk assignment from a list view, pass 'names' as a JSON array of document names."
-            ),
-            frappe.ValidationError,
-        )
+        frappe.throw(_("Document name(s) required (name or names parameter)"), frappe.ValidationError)
 
     # -------------------------
     # Assign using standard assign_to.add
@@ -983,18 +940,8 @@ def assign_without_rule(
 
     try:
         for doc_name in doc_names:
-            # ✅ Correct permission check for Frappe v15
             if not ignore_permissions:
-                try:
-                    doc = frappe.get_doc(doctype, doc_name)
-                except Exception:
-                    frappe.log_error(
-                        f"assign_without_rule: cannot load {doctype} {doc_name}",
-                        "assign_without_rule doc load error",
-                    )
-                    continue
-
-                if not frappe.has_permission(doctype, "read", doc=doc):
+                if not frappe.has_permission(doctype, "read", doc=doc_name):
                     skipped_no_permission += 1
                     continue
 
@@ -1012,9 +959,12 @@ def assign_without_rule(
                     assigned_count += 1
                 except Exception as e:
                     frappe.log_error(
-                        f"Failed to assign {doctype} {doc_name} to {user}: {str(e)}",
-                        "assign_without_rule error",
+                        title="assign_without_rule error",
+                        message=f"Failed to assign {doctype} {doc_name} to {user}: {str(e)}"
                     )
+    except Exception as ge:
+        frappe.log_error(frappe.get_traceback(), "assign_without_rule global error")
+        raise ge
     finally:
         if original_flag is None:
             if hasattr(frappe.flags, "ignore_assign_rule"):

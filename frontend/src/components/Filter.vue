@@ -183,6 +183,10 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  excluded_fields: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['update'])
@@ -218,6 +222,11 @@ const availableFilters = computed(() => {
   const selectedFieldNames = new Set()
   for (const filter of filters.value) {
     selectedFieldNames.add(filter.fieldname)
+  }
+  
+  // also exclude explicitly excluded fields
+  if (props.excluded_fields) {
+    props.excluded_fields.forEach(f => selectedFieldNames.add(f))
   }
 
   return filterableFields.data.filter(

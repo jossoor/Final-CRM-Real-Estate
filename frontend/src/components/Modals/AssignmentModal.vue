@@ -235,21 +235,30 @@ async function updateAssignees() {
     const docsSize = props.docs instanceof Set ? props.docs.size : (Array.isArray(props.docs) ? props.docs.length : 0)
     
     if (docsSize > 0) {
-      console.log('AssignmentModal: Extracting doc names from props.docs:', docsArray)
       docNames = docsArray.map((doc) => {
-        // If doc is a string, use it directly; if it's an object, extract the name property
-        const name = typeof doc === 'string' ? doc : (doc?.name || doc?.id || doc)
-        console.log('AssignmentModal: Mapped doc to name:', { doc, name, type: typeof doc })
-        return name
-      }).filter((name) => {
-        const isValid = name && (typeof name === 'string' ? name.trim() !== '' : true)
-        if (!isValid) {
-          console.warn('AssignmentModal: Filtered out invalid name:', name)
+        let name = ''
+        if (typeof doc === 'string') {
+          name = doc
+        } else if (doc && typeof doc === 'object') {
+          name = doc.name || doc.id || doc.value || doc.docname
+          if (typeof name !== 'string' && name && typeof name === 'object') {
+            name = name.name || name.value || JSON.stringify(name)
+          }
         }
-        return isValid
-      })
-      
-      console.log('AssignmentModal: Extracted docNames:', docNames)
+        
+        if (typeof name !== 'string') {
+          name = String(name || '')
+        }
+
+        console.log('AssignmentModal: Mapped doc to string name:', { 
+          original: doc, 
+          mapped: name, 
+          type: typeof name 
+        })
+        return name
+      }).filter((name) => name && name.trim() !== '')
+
+      console.log('AssignmentModal: Final extracted docNames:', docNames)
       
       if (docNames.length === 0) {
         console.error('AssignmentModal: No valid document names found', { 
@@ -293,32 +302,15 @@ async function updateAssignees() {
         }
         
         capture('bulk_assign_to', { doctype: props.doctype })
-        // Assign to each document individually using the already extracted docNames
-        const promises = docNames
-          .filter((docname) => {
-            const isValid = docname && (typeof docname === 'string' ? docname.trim() !== '' : true)
-            if (!isValid) {
-              console.warn('AssignmentModal: Skipping invalid docname:', docname)
-            }
-            return isValid
-          })
-          .map((docname) => {
-            if (!docname || (typeof docname === 'string' && !docname.trim())) {
-              console.error('AssignmentModal: Invalid docname:', docname)
-              throw new Error(__('Invalid document name'))
-            }
-            
-            const params = {
-              doctype: props.doctype,
-              name: docname,
-              assign_to: addedAssignees,
-              description: '',
-            }
-            console.log('AssignmentModal: Calling assign_to.add with params:', params)
-            
-            return call('frappe.desk.form.assign_to.add', params)
-          })
-        await Promise.all(promises)
+        
+        // Use the robust bulk assignment method from crm.api.doc
+        await call('crm.api.doc.assign_without_rule', {
+          doctype: props.doctype,
+          names: JSON.stringify(docNames),
+          assign_to: JSON.stringify(addedAssignees),
+          description: '',
+        })
+        
         toast.success(__('Assigned successfully'))
         emit('reload')
       } else {
@@ -328,10 +320,10 @@ async function updateAssignees() {
           return
         }
         capture('assign_to', { doctype: props.doctype })
-        await call('frappe.desk.form.assign_to.add', {
+        await call('crm.api.doc.assign_without_rule', {
           doctype: props.doctype,
           name: props.doc.name,
-          assign_to: addedAssignees,
+          assign_to: JSON.stringify(addedAssignees),
           description: '',
         })
         toast.success(__('Assigned successfully'))
@@ -343,8 +335,14 @@ async function updateAssignees() {
     }
     show.value = false
   } catch (err) {
-    error.value = err.messages?.[0] || __('Failed to update assignments')
     console.error('Error updating assignees:', err)
+    let msg = __('Failed to update assignments')
+    if (err) {
+      msg = err.messages?.[0] || err.message || msg
+      // If it's a string, use it
+      if (typeof err === 'string') msg = err
+    }
+    error.value = msg
   }
 }
 

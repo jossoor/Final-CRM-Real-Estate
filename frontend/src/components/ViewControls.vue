@@ -10,6 +10,7 @@
             v-model="list"
             :doctype="doctype"
             :default_filters="filters"
+            :excluded_fields="excluded_filters"
             @update="updateFilter"
           />
           <GroupBy
@@ -135,7 +136,7 @@
     </div>
   </div>
 
-  <div v-else class="flex items-center justify-between gap-2 px-5 py-4">
+  <div v-else-if="!hideUI" class="flex items-center justify-between gap-2 px-5 py-4">
     <FadedScrollableDiv
       class="flex flex-1 items-center overflow-x-auto -ml-1"
       orientation="horizontal"
@@ -182,6 +183,7 @@
           v-model="list"
           :doctype="doctype"
           :default_filters="filters"
+          :excluded_fields="excluded_filters"
           @update="updateFilter"
         />
 
@@ -350,6 +352,14 @@ const props = defineProps({
       // Parent (Leads.vue) sets disablePersistence: true
       disablePersistence: false,
     },
+  },
+  excluded_filters: {
+    type: Array,
+    default: () => [],
+  },
+  hideUI: {
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -937,6 +947,12 @@ const quickFilterList = computed(() => {
       }
     }
   })
+
+
+
+  if (props.excluded_filters && props.excluded_filters.length) {
+    return filters.filter((f) => !props.excluded_filters.includes(f.fieldname))
+  }
 
   return filters
 })
@@ -1528,6 +1544,7 @@ defineExpose({
   setFilters,
   applyLikeFilter,
   clearLikeFilters,
+  updateColumns,
 
   // general reload/pagination helpers
   reload,
