@@ -10,3 +10,21 @@ crm/public/frontend
 frontend/yarn.lock
 crm/www/crm.html
 build
+
+# Local debug scripts
+check_statuses.py
+debug_logs.py
+debug_status.py
+
+# Python
+__pycache__/
+*.pyc
+
+# Node / frontend
+node_modules/
+dist/
+
+# Frappe / ERPNext
+sites/
+logs/
+.env
