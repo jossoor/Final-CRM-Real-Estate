@@ -20,7 +20,19 @@ const comments = ref([])
 const cursor = ref(null)
 
 const newContent = ref('')
-const editing = ref(null) // {name, content}
+const newTitle = ref('') // Title for new feedback
+const newType = ref('Comment') // Default type
+const editing = ref(null) // {name, content, subject, comment_type}
+
+const typeOptions = [
+  { label: 'Feedback', value: 'Comment' },
+  { label: 'Task', value: 'Task' },
+  { label: 'Call', value: 'Call' },
+  { label: 'WhatsApp', value: 'WhatsApp' },
+  { label: 'Property Showing', value: 'Property Showing' },
+  { label: 'Office Visit', value: 'Office Visit' },
+  { label: 'Meeting', value: 'Meeting' },
+]
 
 /** خيارات الريمايندر */
 const addReminder = ref(true)
@@ -83,7 +95,7 @@ async function fetchComments() {
 
     const res = await call('frappe.client.get_list', {
       doctype: 'Comment',
-      fields: ['name','comment_by','owner','content','creation','delayed'],
+      fields: ['name','comment_by','owner','subject','content','creation','delayed'],
       filters,
       order_by: 'creation desc',
       limit_page_length: props.pageSize,
@@ -136,12 +148,16 @@ async function addComment() {
   sending.value = true
   error.value = ''
   try {
-    // 1) أنشئ الكومنت
-    const ins = await call('frappe.desk.form.utils.add_comment', {
-      reference_doctype: props.doctype,
-      reference_name: props.name,
-      content: newContent.value,
-      comment_type: 'Comment',
+    // 1) أنشئ الكومنت using frappe.client.insert
+    const ins = await call('frappe.client.insert', {
+      doc: {
+        doctype: 'Comment',
+        reference_doctype: props.doctype,
+        reference_name: props.name,
+        subject: `${newType.value}:::${newTitle.value.trim()}`,
+        content: newContent.value,
+        comment_type: 'Comment',
+      },
     })
     const commentName = ins?.name || ins?.message?.name || null
 
@@ -165,6 +181,8 @@ async function addComment() {
     }
 
     newContent.value = ''
+    newTitle.value = ''
+    newType.value = 'Comment'
     reminderAtLocal.value = ''
     addReminder.value = true
 
@@ -178,7 +196,7 @@ async function addComment() {
 }
 
 function startEdit(c) {
-  editing.value = { name: c.name, content: stripHtml(c.content) }
+  editing.value = { name: c.name, content: stripHtml(c.content), subject: c.subject || '' }
 }
 
 async function saveEdit() {
@@ -188,8 +206,8 @@ async function saveEdit() {
     await call('frappe.client.set_value', {
       doctype: 'Comment',
       name: editing.value.name,
-      fieldname: 'content',
-      value: editing.value.content,
+      fieldname: { subject: editing.value.subject || '', content: editing.value.content },
+      value: '',
     })
     editing.value = null
     await resetAndLoad()
@@ -217,6 +235,15 @@ async function saveEdit() {
         <!-- Edit box (اختياري) -->
         <div v-if="editing" class="rounded-xl border p-3">
           <div class="mb-2 text-sm font-medium">{{ __('Edit FeedBack') }}</div>
+          <div class="mb-2">
+            <label class="block text-xs text-ink-gray-6 mb-1">{{ __('Title (optional)') }}</label>
+            <input
+              v-model="editing.subject"
+              type="text"
+              class="w-full rounded border px-3 py-2 text-sm"
+              :placeholder="__('Enter title...')"
+            />
+          </div>
           <Textarea v-model="editing.content" rows="3" />
           <div class="mt-2 flex items-center gap-2">
             <Button :loading="savingEdit" variant="solid" @click="saveEdit">{{ __('Save') }}</Button>
@@ -227,6 +254,28 @@ async function saveEdit() {
         <!-- Add new -->
         <div class="rounded-xl border p-3">
           <div class="mb-2 text-sm font-medium">{{ __('Add new FeedBack') }}</div>
+          <div class="mb-2 grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-ink-gray-6 mb-1">{{ __('Title (optional)') }}</label>
+              <input
+                v-model="newTitle"
+                type="text"
+                class="w-full rounded border px-3 py-2 text-sm"
+                :placeholder="__('Enter title...')"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-ink-gray-6 mb-1">{{ __('Type') }}</label>
+              <select
+                v-model="newType"
+                class="w-full rounded border px-3 py-2 text-sm bg-white"
+              >
+                <option v-for="opt in typeOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+            </div>
+          </div>
           <Textarea v-model="newContent" rows="3" placeholder="اكتب تعليقك..." />
 
           <!-- Reminder 옵션 -->
@@ -262,6 +311,10 @@ async function saveEdit() {
           <div v-for="c in comments" :key="c.name" class="rounded-xl border p-3 flex gap-3">
             <Avatar :label="c.comment_by?.[0] || c.owner?.[0] || '?'" />
             <div class="min-w-0 flex-1">
+              <!-- Title if available -->
+              <div v-if="c.subject" class="font-semibold text-base text-ink-gray-9 mb-1">
+                {{ c.subject }}
+              </div>
               <div class="flex items-center gap-2 text-sm text-ink-gray-8">
                 <span class="font-medium">{{ c.comment_by || c.owner }}</span>
                 <span>•</span>

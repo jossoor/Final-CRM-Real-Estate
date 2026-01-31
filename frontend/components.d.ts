@@ -180,6 +180,7 @@ declare module 'vue' {
     LayoutHeader: typeof import('./src/components/LayoutHeader.vue')['default']
     LeadCommentsDialog: typeof import('./src/components/LeadCommentsDialog.vue')['default']
     LeadCommentsQuick: typeof import('./src/components/LeadCommentsQuick.vue')['default']
+    LeadInformationAndFeedback: typeof import('./src/components/LeadInformationAndFeedback.vue')['default']
     LeadModal: typeof import('./src/components/Modals/LeadModal.vue')['default']
     LeadsIcon: typeof import('./src/components/Icons/LeadsIcon.vue')['default']
     LeadsListView: typeof import('./src/components/ListViews/LeadsListView.vue')['default']

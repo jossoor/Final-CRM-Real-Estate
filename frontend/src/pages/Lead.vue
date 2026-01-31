@@ -35,7 +35,7 @@
     </template>
   </LayoutHeader>
 
-  <div v-if="lead?.data" class="flex h-full overflow-hidden">
+  <div v-if="lead?.data" class="flex">
     <Tabs as="div" v-model="tabIndex" :tabs="tabs">
       <template #tab-panel>
         <!-- ================= Payment Plans tab ================= -->
@@ -139,6 +139,15 @@
           </div>
         </template>
 
+        <!-- ================= Information & Activity tab ================= -->
+        <template v-else-if="isInformationTab">
+          <LeadInformationAndFeedback
+            :leadData="lead.data"
+            :doctype="'CRM Lead'"
+            :docname="lead.data?.name || props.leadId"
+          />
+        </template>
+
         <!-- ================= default tab ================= -->
         <template v-else>
           <Activities
@@ -149,7 +158,6 @@
             v-model:reload="reload"
             v-model:tabIndex="tabIndex"
             v-model="lead"
-            :createFilter="isCommentsTab ? ['comment'] : []"
             @beforeSave="saveChanges"
             @afterSave="reloadAssignees"
           />
@@ -243,7 +251,7 @@
 
       <SLASection v-if="lead.data.sla_status" v-model="lead.data" @updateField="updateField" />
 
-      <div v-if="sections.data" class="flex flex-1 flex-col justify-between overflow-hidden">
+      <div v-if="sections.data" class="flex flex-1 flex-col justify-between">
         <SidePanelLayout
           :sections="sections.data"
           doctype="CRM Lead"
@@ -308,6 +316,7 @@ import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import SLASection from '@/components/SLASection.vue'
 import CustomActions from '@/components/CustomActions.vue'
 import ConvertToDealModal from '@/components/Modals/ConvertToDealModal.vue'
+import LeadInformationAndFeedback from '@/components/LeadInformationAndFeedback.vue'
 
 import { openWebsite, setupCustomizations, copyToClipboard, validateIsImageFile } from '@/utils'
 import { getView } from '@/utils/view'
@@ -460,9 +469,8 @@ const isSalesUserFlag = ref(null) // null = unknown while server call pending
 
 // base tabs (Activity injected later if allowed)
 const baseTabOptions = [
-  { name: 'Data', label: __('Data'), icon: DetailsIcon },
+  { name: 'Information & Activity', label: __('Information & Activity'), icon: DetailsIcon },
   { name: 'Payment Plans', label: __('Payment Plans'), icon: DetailsIcon },
-  { name: 'Comments', label: __('FeedBack'), icon: CommentIcon },
   { name: 'Tasks', label: __('Tasks'), icon: TaskIcon },
   { name: 'Notes', label: __('Notes'), icon: NoteIcon },
   { name: 'Attachments', label: __('Attachments'), icon: AttachmentIcon },
@@ -487,8 +495,8 @@ const tabs = computed(() => {
 })
 
 const isPaymentsTab = computed(() => { try { return tabs.value?.[tabIndex.value]?.name === 'Payment Plans' } catch { return false } })
-// جديد: نحدّد إن كنا داخل تبويب التعليقات (Feedback)
-const isCommentsTab = computed(() => { try { return tabs.value?.[tabIndex.value]?.name === 'FeedBacks' } catch { return false } })
+// Check if we're in the Information & Activity tab
+const isInformationTab = computed(() => { try { return tabs.value?.[tabIndex.value]?.name === 'Information & Activity' } catch { return false } })
 
 // --- hide Activity tab for Sales User on portal ---
 const isSalesUser = computed(() => {

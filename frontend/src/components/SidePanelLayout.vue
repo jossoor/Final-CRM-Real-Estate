@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="!document.get?.loading"
-    class="sections flex flex-col overflow-y-auto"
+    class="sections flex flex-col"
   >
     <template v-for="(section, i) in _sections" :key="section.name">
       <div v-if="section.visible" class="section flex flex-col">
@@ -34,7 +34,7 @@
             <slot v-bind="{ section }">
               <FadedScrollableDiv
                 v-if="section.columns?.[0].fields.length"
-                class="column flex flex-col gap-1.5 overflow-y-auto"
+                class="column flex flex-col gap-1.5"
               >
                 <template
                   v-for="field in section.columns[0].fields || []"
@@ -580,10 +580,4 @@ function firstVisibleIndex() {
   width: 0;
 }
 
-.sections .section .column {
-  max-height: 300px;
-}
-.sections .section:last-of-type .column {
-  max-height: none;
-}
 </style>

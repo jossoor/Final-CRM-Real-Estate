@@ -15,7 +15,7 @@
   />
   <FadedScrollableDiv
     :maskHeight="30"
-    class="flex flex-col flex-1 overflow-y-auto"
+    class="flex flex-col flex-1"
   >
     <div
       v-if="all_activities?.loading"

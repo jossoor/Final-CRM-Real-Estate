@@ -35,6 +35,10 @@
             <div v-else-if="!comments.length" class="text-ink-gray-6 text-sm">{{ __('No FeedBacks yet') }}</div>
             <div v-else class="space-y-3">
               <div v-for="c in comments" :key="c.name" class="border-b pb-2">
+                <!-- Title if available -->
+                <div v-if="c.subject" class="font-semibold text-base text-ink-gray-9 mb-1">
+                  {{ c.subject }}
+                </div>
                 <div class="flex flex-wrap items-center justify-between gap-3 text-xs text-ink-gray-6">
                   <div>{{ formatDate(c.creation) }} — {{ c.owner }}</div>
                   <label class="inline-flex items-center gap-1 text-[11px]" :title="__('Delayed flag is read-only')">
@@ -62,6 +66,19 @@
             @keydown.ctrl.enter.prevent="addComment"
             @keydown.meta.enter.prevent="addComment"
           >
+            <!-- Title field (optional) -->
+            <div class="mb-3">
+              <label class="block text-xs text-ink-gray-6 mb-1">
+                {{ __('Title (optional)') }}
+              </label>
+              <input
+                v-model="commentTitle"
+                type="text"
+                :placeholder="__('Enter feedback title...')"
+                class="w-full rounded border px-3 py-2 outline-none focus:ring-2 focus:ring-ink-blue-4"
+              />
+            </div>
+
             <textarea
               v-model="newComment"
               rows="4"
@@ -116,6 +133,7 @@ const loading = ref(false)
 const saving  = ref(false)
 const comments = ref([])
 const newComment = ref('')
+const commentTitle = ref('') // Title for the feedback
 
 /** Reminder (required): يبدأ فاضي لإجبار الاختيار */
 const reminderAtLocal = ref('') // YYYY-MM-DDTHH:mm
@@ -253,8 +271,8 @@ async function loadComments() {
   try {
     const res = await call('frappe.client.get_list', {
       doctype: 'Comment',
-      // ملاحظة: لدينا حقل delayed في النظام الحالي
-      fields: ['name', 'content', 'owner', 'creation', 'delayed'],
+      // ملاحظة: لدينا حقل delayed في النظام الحالي + subject للعنوان
+      fields: ['name', 'subject', 'content', 'owner', 'creation', 'delayed'],
       filters: {
         reference_doctype: 'CRM Lead',
         reference_name: props.leadName,
@@ -303,6 +321,7 @@ async function addComment() {
         doctype: 'Comment',
         reference_doctype: 'CRM Lead',
         reference_name: props.leadName,
+        subject: commentTitle.value.trim() || null, // Add title if provided
         content,
         comment_type: 'Comment',
       },
@@ -331,6 +350,7 @@ async function addComment() {
 
     toast.success(__('FeedBack & reminder added'))
     newComment.value = ''
+    commentTitle.value = '' // Clear title
     reminderAtLocal.value = '' // يرجع فاضي لإجبار اختيار جديد
 
     // أعِد التحميل
